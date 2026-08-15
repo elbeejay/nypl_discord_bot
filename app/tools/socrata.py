@@ -101,7 +101,7 @@ async def query_tree_census(boroname: str, spc_common: Optional[str] = None, lim
     Query NYC Street Tree Census data.
     Example: boroname="Queens", spc_common="honeylocust"
     """
-    clean_boro = str(boroname).strip().upper()
+    clean_boro = str(boroname).strip().upper().replace("'", "''")
     where = f"upper(boroname) = '{clean_boro}'"
     if spc_common:
         escaped_species = str(spc_common).strip().upper().replace("'", "''")

@@ -1,12 +1,14 @@
 import logging
-from typing import Any, List, Optional
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, status
-from fastapi.responses import JSONResponse
+from typing import Optional
+from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from app.config import settings
-from app.discord.security import verify_discord_signature
-from app.discord.client import discord_client
 from app.agents.orchestrator import orchestrator_agent
+from app.api.v1.router import api_v1_router
+from app.discord.router import router as discord_router, extract_query_from_options
+from app.security.rate_limiter import RateLimitMiddleware
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -14,79 +16,76 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+is_production = settings.ENVIRONMENT.lower() == "production"
+
+# In production: disable OpenAPI / Swagger documentation endpoints for security
 app = FastAPI(
-    title="NYC & NYPL Discord Agent Backend",
-    version="0.1.0",
-    description="Agentic A2A Discord bot powered by Google GenAI and Cloud Run",
+    title="NYC & NYPL Multi-Channel Agent Backend",
+    version="0.2.0",
+    description="Multi-channel AI Agent Backend supporting Discord bots, Web & Mobile Frontends, and A2UI dynamic visual data widgets.",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
+# ----------------------------------------------------
+# Security Layer 1: In-Memory IP Rate Limiting
+# ----------------------------------------------------
+app.add_middleware(RateLimitMiddleware)
 
-def extract_query_from_options(options: Optional[List[dict]]) -> str:
-    """
-    Safely extract user query string from Discord slash command options or nested subcommands.
-    """
-    if not options:
-        return "Hello!"
+# ----------------------------------------------------
+# Security Layer 2: CORS Configuration
+# ----------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # 1. Look for explicit option named 'query'
-    for opt in options:
-        if opt.get("name") == "query" and opt.get("value") is not None:
-            return str(opt["value"]).strip()
+# ----------------------------------------------------
+# Route Inclusions
+# ----------------------------------------------------
+# 1. API v1 for Frontend Clients (Protected via FRONTEND_API_KEY when configured)
+app.include_router(api_v1_router)
 
-    # 2. Check for nested subcommand options
-    for opt in options:
-        nested_options = opt.get("options")
-        if nested_options and isinstance(nested_options, list):
-            nested_result = extract_query_from_options(nested_options)
-            if nested_result:
-                return nested_result
-
-    # 3. Fall back to first option with a value
-    for opt in options:
-        if opt.get("value") is not None:
-            return str(opt["value"]).strip()
-
-    return "Hello!"
+# 2. Discord Interaction Router (Protected via Ed25519 Cryptographic Signatures)
+app.include_router(discord_router)
+app.include_router(discord_router, prefix="/discord")
 
 
-async def process_agent_interaction(interaction_token: str, user_query: str, command_name: str = "ask"):
-    """
-    Background worker that runs the agent loop and patches Discord's deferred interaction.
-    """
-    logger.info(f"Processing command /{command_name} query: '{user_query}'")
-    try:
-        response_text = await orchestrator_agent.handle_user_query(user_query, command_name=command_name)
-        success = await discord_client.patch_original_response(
-            interaction_token=interaction_token,
-            content=response_text,
-        )
-        if not success:
-            logger.error("Failed to patch Discord response webhook.")
-    except Exception as e:
-        logger.error(f"Error executing agent task: {e}", exc_info=True)
-        try:
-            await discord_client.patch_original_response(
-                interaction_token=interaction_token,
-                content=f"❌ An error occurred while processing your request: {str(e)}",
-            )
-        except Exception as fallback_error:
-            logger.error(f"Failed to deliver error response to Discord: {fallback_error}", exc_info=True)
+# ----------------------------------------------------
+# Root & Health Endpoints
+# ----------------------------------------------------
 
-
-from pydantic import BaseModel
-
-
-class ChatRequest(BaseModel):
+class LegacyChatRequest(BaseModel):
     query: str
     command: Optional[str] = "ask"
 
 
 @app.get("/")
 async def root():
+    # In production, redact internal architecture details
+    if is_production:
+        return {
+            "status": "healthy",
+            "service": "nypl_discord_bot",
+        }
+
     return {
         "status": "healthy",
         "service": "nypl_discord_bot",
+        "version": "0.2.0",
         "environment": settings.ENVIRONMENT,
+        "features": {
+            "discord_bot": True,
+            "frontend_api_v1": True,
+            "a2ui_visualizations": True,
+            "sse_streaming": True,
+            "api_key_auth": bool(settings.FRONTEND_API_KEY),
+            "rate_limiting": True,
+        },
         "models": {
             "orchestrator": settings.ORCHESTRATOR_MODEL,
             "expert": settings.EXPERT_MODEL,
@@ -96,16 +95,26 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    """
+    Bare-minimum static health check endpoint required by GCP Cloud Run load balancers.
+    Touches zero AI models and consumes zero tokens.
+    """
     return {"status": "ok"}
 
 
 @app.post("/chat")
-async def local_chat_test(request: ChatRequest):
+async def legacy_local_chat_test(request: LegacyChatRequest):
     """
-    Local testing endpoint to test agent reasoning & tools directly
-    without needing Discord webhooks or Ed25519 signatures.
+    Direct /chat testing endpoint (development only).
+    Disabled in production in favor of secured /api/v1/chat.
     """
-    logger.info(f"Direct /chat query received: '{request.query}' (command: {request.command})")
+    if is_production:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Legacy /chat endpoint is disabled in production. Use /api/v1/chat.",
+        )
+
+    logger.info(f"Direct /chat query: '{request.query}' (command: {request.command})")
     response_text = await orchestrator_agent.handle_user_query(
         request.query,
         command_name=request.command or "ask"
@@ -115,56 +124,3 @@ async def local_chat_test(request: ChatRequest):
         "command": request.command,
         "response": response_text
     }
-
-
-@app.post("/interactions")
-async def handle_discord_interaction(request: Request, background_tasks: BackgroundTasks):
-    """
-    Discord HTTP Interaction endpoint.
-    Handles PING (Type 1) for endpoint verification, and APPLICATION_COMMAND (Type 2) slash commands.
-    """
-    signature = request.headers.get("X-Signature-Ed25519")
-    timestamp = request.headers.get("X-Signature-Timestamp")
-    body = await request.body()
-
-    # If public key is configured, verify Ed25519 signature
-    if settings.DISCORD_PUBLIC_KEY:
-        if not verify_discord_signature(signature, timestamp, body):
-            logger.warning("Rejected request due to invalid Ed25519 signature.")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid request signature")
-
-    try:
-        payload = await request.json()
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON body")
-
-    interaction_type = payload.get("type")
-
-    # 1. Handle Discord Ping Validation (Type 1)
-    if interaction_type == 1:
-        logger.info("Discord PING (Type 1) acknowledged.")
-        return JSONResponse(content={"type": 1})
-
-    # 2. Handle Slash Commands (Type 2)
-    if interaction_type == 2:
-        interaction_token = payload.get("token")
-        if not interaction_token:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing interaction token")
-
-        data = payload.get("data", {})
-        command_name = data.get("name", "ask")
-        options = data.get("options", [])
-        user_query = extract_query_from_options(options)
-
-        logger.info(f"Received slash command /{command_name} with query: '{user_query}'")
-
-        # Defer execution to background task to avoid 3s timeout
-        background_tasks.add_task(process_agent_interaction, interaction_token, user_query, command_name)
-
-        # Immediate DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE response (Type 5)
-        return JSONResponse(content={"type": 5})
-
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"type": 4, "data": {"content": "Unsupported interaction type"}},
-    )

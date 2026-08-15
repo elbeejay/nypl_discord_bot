@@ -35,7 +35,8 @@ class TestDiscordBot(unittest.TestCase):
         )
 
     def test_signature_verification(self):
-        timestamp = "1700000000"
+        import time
+        timestamp = str(int(time.time()))
         body = b'{"type": 1}'
         valid_sig = self.signing_key.sign(timestamp.encode() + body).signature.hex()
         
@@ -47,6 +48,11 @@ class TestDiscordBot(unittest.TestCase):
         
         # Tampered body
         self.assertFalse(verify_discord_signature(valid_sig, timestamp, b'{"type": 2}'))
+
+        # Expired replay timestamp (older than 300s)
+        expired_timestamp = str(int(time.time()) - 600)
+        expired_sig = self.signing_key.sign(expired_timestamp.encode() + body).signature.hex()
+        self.assertFalse(verify_discord_signature(expired_sig, expired_timestamp, body))
 
     def test_nypl_branch_tool(self):
         res = asyncio.run(find_nypl_branch("Schwarzman"))
@@ -84,8 +90,9 @@ class TestFastAPIEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json(), {"status": "ok"})
 
     async def test_discord_ping_type_1(self):
+        import time
         body = b'{"type": 1}'
-        timestamp = "1700000000"
+        timestamp = str(int(time.time()))
         sig = self.signing_key.sign(timestamp.encode() + body).signature.hex()
         headers = {
             "X-Signature-Ed25519": sig,
@@ -97,8 +104,9 @@ class TestFastAPIEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json(), {"type": 1})
 
     async def test_discord_slash_command_deferred_type_5(self):
+        import time
         body = b'{"type": 2, "token": "test_interaction_token", "data": {"name": "ask", "options": [{"name": "query", "value": "Test query"}]}}'
-        timestamp = "1700000000"
+        timestamp = str(int(time.time()))
         sig = self.signing_key.sign(timestamp.encode() + body).signature.hex()
         headers = {
             "X-Signature-Ed25519": sig,

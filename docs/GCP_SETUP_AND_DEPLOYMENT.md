@@ -1,6 +1,6 @@
 # GCP Setup & Cloud Run Modern Deployment Guide ☁️🚀
 
-This guide walks you through safely, securely, and cost-effectively deploying the **NYC & NYPL Multi-Channel Assistant Backend** to **Google Cloud Run** using **GCP Secret Manager**, **IAM Least-Privilege Service Accounts**, and **Google GenAI / Gemini 2.5**.
+This guide walks you through safely, securely, and cost-effectively deploying the **NYC & NYPL Multi-Channel Assistant Backend** to **Google Cloud Run** using **GCP Secret Manager**, **IAM Least-Privilege Service Accounts**, and **Google GenAI / Gemini 3.5 Flash Lite**.
 
 ---
 
@@ -166,7 +166,7 @@ gcloud run deploy nypl-discord-bot \
   --memory 512Mi \
   --cpu 1 \
   --timeout 120s \
-  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-2.5-flash,EXPERT_MODEL=gemini-2.5-flash \
+  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-3.5-flash-lite,EXPERT_MODEL=gemini-3.5-flash-lite \
   --set-secrets \
 DISCORD_PUBLIC_KEY=DISCORD_PUBLIC_KEY:latest,\
 DISCORD_APP_ID=DISCORD_APP_ID:latest,\

@@ -162,7 +162,7 @@ gcloud run deploy $SERVICE_NAME \
   --memory 512Mi \
   --cpu 1 \
   --timeout 120s \
-  --set-env-vars="ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-2.5-flash,EXPERT_MODEL=gemini-2.5-flash" \
+  --set-env-vars="ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-3.5-flash-lite,EXPERT_MODEL=gemini-3.5-flash-lite" \
   --set-secrets="DISCORD_PUBLIC_KEY=DISCORD_PUBLIC_KEY:latest,DISCORD_APP_ID=DISCORD_APP_ID:latest,DISCORD_BOT_TOKEN=DISCORD_BOT_TOKEN:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,FRONTEND_API_KEY=FRONTEND_API_KEY:latest"
 ```
 

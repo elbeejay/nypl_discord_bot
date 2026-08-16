@@ -13,7 +13,6 @@ from app.schemas.a2ui import (
     A2UIPayload,
 )
 from app.tools.a2ui_generator import extract_a2ui_from_text_response
-from app.agents.nyc_discovery_agent import nyc_discovery_agent
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +21,8 @@ You are the Gateway Orchestrator Agent for the NYC & NYPL AI Assistant.
 Your job is to triage incoming user requests and delegate domain-specific tasks to specialized expert agents.
 
 You have access to two expert delegation tools:
-1. `delegate_to_nyc_data_agent`: Call this when the query relates to NYC Open Data, 311 complaints, restaurant health inspection grades/violations, street trees, or municipal city data.
+1. `delegate_to_nyc_data_agent`: Call this when the query relates to NYC Open Data, 311 complaints, restaurant health inspection grades/violations, street trees, municipal city datasets, civic topics, subway/transit metrics, wifi kiosks, traffic, or dataset discovery.
 2. `delegate_to_nypl_agent`: Call this when the query relates to the New York Public Library (NYPL), historical digital archives/photos/prints, library locations, or research collections.
-3. `delegate_to_nyc_discovery_agent`: Call this when the query asks about ANY OTHER NYC open datasets, civic topics, or general infrastructure catalogs outside of 311/Trees/Restaurants (e.g., subway system metrics, evictions, traffic accidents, linknyc kiosks, or school data).
 
 Multi-Turn Context & Coreference Instructions:
 - When <conversation_history> is provided in the prompt, carefully review prior turns to resolve all pronouns ("it", "that library", "the second violation", "that same year") and implied continuous filters (e.g. if previous turn was about 311 noise in Brooklyn and current turn asks "What about in Queens?", retain the 311 noise complaint criteria for Queens).
@@ -49,14 +47,6 @@ async def delegate_to_nypl_agent(query: str) -> str:
     logger.info(f"Delegating to NYPL Agent: {query}")
     return await nypl_agent.run(query)
 
-
-async def delegate_to_nyc_discovery_agent(query: str) -> str:
-    """
-    Delegates to the NYC Discovery Agent when the user asks about deep or un-indexed
-    NYC Open Data catalogs (like housing, subways, eviction data, etc.)
-    """
-    logger.info(f"Delegating to NYC Discovery Agent: {query}")
-    return await nyc_discovery_agent.run(query)
 
 
 
@@ -212,7 +202,7 @@ class OrchestratorAgent:
 
         # Step 2 Trace: Expert Selection & Tool Call
         is_nypl = cmd == "nypl" or any(w in q_lower for w in ["photo", "picture", "archive", "history", "schwarzman", "schomburg", "manuscript", "book", "library", "branch"])
-        is_nyc = cmd == "nycdata" or any(w in q_lower for w in ["311", "noise", "complaint", "restaurant", "inspection", "grade", "tree", "census", "borough", "violation"])
+        is_nyc = cmd == "nycdata" or any(w in q_lower for w in ["311", "noise", "complaint", "restaurant", "inspection", "grade", "tree", "census", "borough", "violation", "dataset", "subway", "kiosk", "wifi", "traffic", "housing", "payroll", "budget"])
 
         if is_nypl and not is_nyc:
             yield {

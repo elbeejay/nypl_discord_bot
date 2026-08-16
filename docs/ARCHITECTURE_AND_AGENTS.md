@@ -18,7 +18,7 @@ graph TD
         Security[Ed25519 Cryptographic Verifier]
         BG[Async Background Task Worker]
         
-        subgraph GenAI_Agents [Google GenAI / Gemini 2.0 Flash]
+        subgraph GenAI_Agents [Google GenAI / Gemini 3.5 Flash Lite]
             Orchestrator[Gateway Orchestrator Agent]
             NYPL_Expert[NYPL Expert Agent]
             NYC_Expert[NYC Open Data Specialist]
@@ -56,13 +56,13 @@ graph TD
 
 ## 🧠 Agent-to-Agent (A2A) Hierarchy
 
-The system follows an **Agentic Delegation Pattern** using Google's `google-genai` SDK and **Gemini 2.0 Flash**:
+The system follows an **Agentic Delegation Pattern** using Google's `google-genai` SDK and **Gemini 3.5 Flash Lite**:
 
 ### 1. Gateway Orchestrator Agent ([`orchestrator.py`](../app/agents/orchestrator.py))
 - **Role**: High-level triage, intent classification, multi-domain routing, and response synthesis.
-- **Model**: `gemini-2.0-flash` (Temperature: 0.2).
+- **Model**: `gemini-3.5-flash-lite` (Temperature: 0.2).
 - **Delegation Tools**:
-  - `delegate_to_nyc_data_agent`: Routes questions about 311 complaints, restaurant sanitation, street trees, or city metrics.
+  - `delegate_to_nyc_data_agent`: Routes questions about 311 complaints, restaurant sanitation, street trees, municipal datasets, and open data discovery.
   - `delegate_to_nypl_agent`: Routes questions about NYPL digital archives, public domain photos, maps, manuscripts, or research centers.
 - **Multi-Domain Synthesis**: If a query involves both domains (e.g. *"What are the 311 noise complaints near the historic Schwarzman library building?"*), the orchestrator calls both expert agents in parallel and combines the findings into a cohesive, structured answer.
 
@@ -78,6 +78,8 @@ The system follows an **Agentic Delegation Pattern** using Google's `google-gena
   - `query_nyc_311`: Queries real-time NYC 311 service request complaints (noise, parking, heat/hot water, sanitation, traffic).
   - `query_restaurant_inspections`: Queries NYC DOHMH restaurant inspection scores, grades (A, B, C), and violation descriptions.
   - `query_tree_census`: Queries NYC Parks 2015 Street Tree Census data across boroughs.
+  - `search_nyc_datasets`: Searches the NYC Open Data catalog (Discovery API) for any municipal dataset across topics.
+  - `query_dynamic_dataset`: Dynamically queries any NYC Open Data dataset using its 4x4 ID and custom SoQL expressions.
 
 ---
 

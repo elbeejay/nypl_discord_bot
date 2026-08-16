@@ -1,6 +1,6 @@
 # NYC & NYPL Discord Bot Documentation 📚🤖
 
-Welcome to the documentation for the **NYC & NYPL Discord Bot**, an AI agentic backend built with **FastAPI**, **Google GenAI (Gemini 2.0 Flash)**, and **Discord HTTP Webhooks**, designed to run locally or scale to zero on **Google Cloud Run**.
+Welcome to the documentation for the **NYC & NYPL Discord Bot**, an AI agentic backend built with **FastAPI**, **Google GenAI (Gemini 3.5 Flash Lite)**, and **Discord HTTP Webhooks**, designed to run locally or scale to zero on **Google Cloud Run**.
 
 ---
 
@@ -14,7 +14,7 @@ Welcome to the documentation for the **NYC & NYPL Discord Bot**, an AI agentic b
 | **[Local Development Guide](LOCAL_DEVELOPMENT.md)** | Step-by-step instructions for running locally with Python venv, ngrok tunneling, and running automated test suites. |
 | **[Discord Bot Setup Guide](DISCORD_BOT_SETUP.md)** | Walkthrough for Discord Developer Portal setup, obtaining credentials (App ID, Public Key, Token), bot permissions, and registering slash commands. |
 | **[GCP Setup & Deployment Guide](GCP_SETUP_AND_DEPLOYMENT.md)** | Complete guide for setting up GCP Secret Manager, deploying to Cloud Run with `--no-cpu-throttling`, configuring endpoints, and production maintenance. |
-| **[Architecture & Agents Guide](ARCHITECTURE_AND_AGENTS.md)** | Deep dive into the Agent-to-Agent (A2A) orchestration model, Gemini 2.5 Flash tool-calling, SODA SoQL queries, and the Discord 3-second deferred interaction flow. |
+| **[Architecture & Agents Guide](ARCHITECTURE_AND_AGENTS.md)** | Deep dive into the Agent-to-Agent (A2A) orchestration model, Gemini 3.5 Flash Lite tool-calling, SODA SoQL queries, and the Discord 3-second deferred interaction flow. |
 
 ---
 

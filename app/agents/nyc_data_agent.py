@@ -4,7 +4,13 @@ from typing import Optional
 from google import genai
 from google.genai import types
 from app.config import settings
-from app.tools.socrata import query_nyc_311, query_restaurant_inspections, query_tree_census
+from app.tools.socrata import (
+    query_nyc_311,
+    query_restaurant_inspections,
+    query_tree_census,
+    search_nyc_datasets,
+    query_dynamic_dataset,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +26,14 @@ Available tools:
    Note: borough names in SoQL must be uppercase ('MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND').
 2. `query_restaurant_inspections`: Look up NYC DOHMH restaurant health inspection grades and violation details by restaurant name.
 3. `query_tree_census`: Look up street trees in the 5 boroughs (e.g., Queens, Brooklyn).
+4. `search_nyc_datasets`: Search the NYC Open Data catalog (Discovery API) for datasets on any topic outside 311/trees/restaurants (e.g. subway ridership, wifi kiosks, school directories, housing, city payroll, traffic crashes). Returns 4x4 dataset IDs and available column names.
+5. `query_dynamic_dataset`: Query any NYC Open Data dataset dynamically using its 4x4 dataset ID and SoQL filters ($where, $select, $order).
+
+Dataset Discovery & Dynamic Query Workflow:
+- If a user asks about an NYC topic not covered by the dedicated 311, trees, or restaurant inspection tools, call `search_nyc_datasets` with relevant keywords.
+- Inspect the returned catalog results to identify the best 4x4 dataset ID (e.g. 'n6c5-95xh') and the available column field names.
+- Call `query_dynamic_dataset` passing the `four_by_four_id` and appropriate SoQL filters using those column names.
+- Present the final answer clearly with relevant statistics, column values, and summaries.
 
 Multi-Turn Context Instructions:
 - Incoming queries may contain <conversation_history> and <current_user_request>.
@@ -62,7 +76,13 @@ class NYCDataAgent:
         """
         try:
             client = self._get_client()
-            tools = [query_nyc_311, query_restaurant_inspections, query_tree_census]
+            tools = [
+                query_nyc_311,
+                query_restaurant_inspections,
+                query_tree_census,
+                search_nyc_datasets,
+                query_dynamic_dataset,
+            ]
             
             thinking_config = None
             if settings.THINKING_BUDGET is not None:

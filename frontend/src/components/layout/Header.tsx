@@ -1,5 +1,4 @@
-import React from 'react';
-import { Sun, Moon, Plus, KeyRound, Lock } from 'lucide-react';
+import { Sun, Moon, Plus, KeyRound, Lock, Sparkles, Cpu } from 'lucide-react';
 
 interface Props {
   theme?: 'light' | 'dark';
@@ -10,6 +9,8 @@ interface Props {
   isAuthenticated?: boolean;
   onOpenKeyModal?: () => void;
   onLogout?: () => void;
+  activeView?: 'canvas' | 'explainer';
+  onSelectView?: (view: 'canvas' | 'explainer') => void;
 }
 
 export const Header: React.FC<Props> = ({
@@ -21,6 +22,8 @@ export const Header: React.FC<Props> = ({
   isAuthenticated = false,
   onOpenKeyModal,
   onLogout,
+  activeView = 'canvas',
+  onSelectView,
 }) => {
   const handleReset = onGoHome || onResetChat || (() => {});
 
@@ -31,13 +34,17 @@ export const Header: React.FC<Props> = ({
         {/* Clickable Brand / Logo to return to Home Screen */}
         <div
           className="nypl-header-brand"
-          onClick={handleReset}
+          onClick={() => {
+            if (onSelectView) onSelectView('canvas');
+            handleReset();
+          }}
           role="button"
           tabIndex={0}
           title="Return to Home / Start New Inquiry"
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
+              if (onSelectView) onSelectView('canvas');
               handleReset();
             }
           }}
@@ -54,9 +61,33 @@ export const Header: React.FC<Props> = ({
           </div>
         </div>
 
+        {/* View Switcher Pill Navigation */}
+        {onSelectView && (
+          <div className="nypl-view-toggle" role="tablist" aria-label="View Mode">
+            <button
+              className={`nypl-view-tab ${activeView === 'canvas' ? 'active' : ''}`}
+              onClick={() => onSelectView('canvas')}
+              role="tab"
+              aria-selected={activeView === 'canvas'}
+            >
+              <Sparkles size={13} />
+              <span>Canvas</span>
+            </button>
+            <button
+              className={`nypl-view-tab ${activeView === 'explainer' ? 'active' : ''}`}
+              onClick={() => onSelectView('explainer')}
+              role="tab"
+              aria-selected={activeView === 'explainer'}
+            >
+              <Cpu size={13} />
+              <span>30s Pitch & Specs</span>
+            </button>
+          </div>
+        )}
+
         <div className="nypl-header-actions">
           {/* New Chat / Reset Button */}
-          {messageCount > 0 && (
+          {activeView === 'canvas' && messageCount > 0 && (
             <button
               className="nypl-new-chat-btn"
               onClick={handleReset}

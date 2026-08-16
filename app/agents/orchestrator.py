@@ -202,7 +202,7 @@ class OrchestratorAgent:
             "data": {
                 "stage": "gateway",
                 "title": "Gateway Router",
-                "agent": "Gemini 2.5 Flash Orchestrator",
+                "agent": "Gemini 3.5 Flash Lite Orchestrator",
                 "detail": f"Analyzing intent for [{cmd.upper()}] channel",
                 "status": "running"
             }

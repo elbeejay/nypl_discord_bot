@@ -96,7 +96,7 @@ export const StarterCanvas: React.FC<Props> = ({ onSelectPrompt }) => {
             New York Public Library & Urban Intelligence
           </h1>
           <p className="canvas-starter-subtitle">
-            Enter any inquiry above to generate a custom, dynamic interactive canvas powered by Gemini 2.5 Flash, 
+            Enter any inquiry above to generate a custom, dynamic interactive canvas powered by Gemini 3.5 Flash Lite, 
             the NYPL Digital Collections repository, and NYC SODA municipal datasets.
           </p>
         </div>

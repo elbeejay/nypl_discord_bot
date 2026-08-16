@@ -6,15 +6,15 @@ An AI agentic backend built with **FastAPI**, **Google GenAI (Gemini 2.0 Flash)*
 
 ## 📚 Complete Documentation
 
-Comprehensive guides are available in the [`docs/`](file:///home/jayh/Documents/nypl_discord_bot/docs/README.md) directory:
+Comprehensive guides are available in the [`docs/`](docs/README.md) directory:
 
-- 📖 **[High-Level System Explainer](file:///home/jayh/Documents/nypl_discord_bot/docs/HIGH_LEVEL_EXPLAINER.md)** — Executive summary, end-to-end request lifecycles, and architecture overview.
-- 💬 **[Discord User Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_USER_GUIDE.md)** — User guide for interacting with `/ask`, `/nypl`, and `/nycdata` slash commands.
-- 📋 **[GCP Deployment Procedural SOP](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_DEPLOYMENT_PROCEDURE.md)** — Step-by-step procedural runbook for provisioning, secrets, deployment, and verification.
-- 💻 **[Local Development Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/LOCAL_DEVELOPMENT.md)** — Step-by-step instructions for running locally with virtualenv, ngrok tunneling, and running automated tests.
-- 🤖 **[Discord Bot Setup Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_BOT_SETUP.md)** — Developer Portal walkthrough, credentials, OAuth2 bot invite link, and slash commands.
-- ☁️ **[GCP Setup & Cloud Run Deployment](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_SETUP_AND_DEPLOYMENT.md)** — GCP Secret Manager configuration, `--no-cpu-throttling` deployment, and production verification.
-- 🏛️ **[Architecture & Agents Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/ARCHITECTURE_AND_AGENTS.md)** — Agent-to-Agent (A2A) orchestration model, SODA SoQL queries, and the Discord 3-second deferred interaction flow.
+- 📖 **[High-Level System Explainer](docs/HIGH_LEVEL_EXPLAINER.md)** — Executive summary, end-to-end request lifecycles, and architecture overview.
+- 💬 **[Discord User Guide](docs/DISCORD_USER_GUIDE.md)** — User guide for interacting with `/ask`, `/nypl`, and `/nycdata` slash commands.
+- 📋 **[GCP Deployment Procedural SOP](docs/GCP_DEPLOYMENT_PROCEDURE.md)** — Step-by-step procedural runbook for provisioning, secrets, deployment, and verification.
+- 💻 **[Local Development Guide](docs/LOCAL_DEVELOPMENT.md)** — Step-by-step instructions for running locally with virtualenv, ngrok tunneling, and running automated tests.
+- 🤖 **[Discord Bot Setup Guide](docs/DISCORD_BOT_SETUP.md)** — Developer Portal walkthrough, credentials, OAuth2 bot invite link, and slash commands.
+- ☁️ **[GCP Setup & Cloud Run Deployment](docs/GCP_SETUP_AND_DEPLOYMENT.md)** — GCP Secret Manager configuration, `--no-cpu-throttling` deployment, and production verification.
+- 🏛️ **[Architecture & Agents Guide](docs/ARCHITECTURE_AND_AGENTS.md)** — Agent-to-Agent (A2A) orchestration model, SODA SoQL queries, and the Discord 3-second deferred interaction flow.
 
 ---
 
@@ -87,5 +87,5 @@ DISCORD_BOT_TOKEN=DISCORD_BOT_TOKEN:latest,\
 GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
-Once deployed, copy your Cloud Run endpoint URL (`https://<service-url>/interactions`) and set it as the **Interactions Endpoint URL** in the [Discord Developer Portal](https://discord.com/developers/applications). Detailed setup guide is in [`docs/GCP_SETUP_AND_DEPLOYMENT.md`](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_SETUP_AND_DEPLOYMENT.md).
+Once deployed, copy your Cloud Run endpoint URL (`https://<service-url>/interactions`) and set it as the **Interactions Endpoint URL** in the [Discord Developer Portal](https://discord.com/developers/applications). Detailed setup guide is in [`docs/GCP_SETUP_AND_DEPLOYMENT.md`](docs/GCP_SETUP_AND_DEPLOYMENT.md).
 

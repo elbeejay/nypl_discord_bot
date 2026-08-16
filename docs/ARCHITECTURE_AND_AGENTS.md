@@ -58,7 +58,7 @@ graph TD
 
 The system follows an **Agentic Delegation Pattern** using Google's `google-genai` SDK and **Gemini 2.0 Flash**:
 
-### 1. Gateway Orchestrator Agent ([`orchestrator.py`](file:///home/jayh/Documents/nypl_discord_bot/app/agents/orchestrator.py))
+### 1. Gateway Orchestrator Agent ([`orchestrator.py`](../app/agents/orchestrator.py))
 - **Role**: High-level triage, intent classification, multi-domain routing, and response synthesis.
 - **Model**: `gemini-2.0-flash` (Temperature: 0.2).
 - **Delegation Tools**:
@@ -66,13 +66,13 @@ The system follows an **Agentic Delegation Pattern** using Google's `google-gena
   - `delegate_to_nypl_agent`: Routes questions about NYPL digital archives, public domain photos, maps, manuscripts, or research centers.
 - **Multi-Domain Synthesis**: If a query involves both domains (e.g. *"What are the 311 noise complaints near the historic Schwarzman library building?"*), the orchestrator calls both expert agents in parallel and combines the findings into a cohesive, structured answer.
 
-### 2. NYPL Expert Agent ([`nypl_agent.py`](file:///home/jayh/Documents/nypl_discord_bot/app/agents/nypl_agent.py))
+### 2. NYPL Expert Agent ([`nypl_agent.py`](../app/agents/nypl_agent.py))
 - **Role**: Domain specialist in the New York Public Library's public domain archives and branch locations.
 - **Tools**:
   - `search_nypl_digital_collections`: Searches public domain photographs, maps, prints, and digitized manuscripts via NYPL's API.
   - `find_nypl_branch`: Searches NYPL research centers (Schwarzman, Schomburg, Library for the Performing Arts, SNFL) and borough locations.
 
-### 3. NYC Open Data Specialist ([`nyc_data_agent.py`](file:///home/jayh/Documents/nypl_discord_bot/app/agents/nyc_data_agent.py))
+### 3. NYC Open Data Specialist ([`nyc_data_agent.py`](../app/agents/nyc_data_agent.py))
 - **Role**: Urban data engineer specializing in Socrata Open Data API (SODA) and SoQL query formation.
 - **Tools**:
   - `query_nyc_311`: Queries real-time NYC 311 service request complaints (noise, parking, heat/hot water, sanitation, traffic).
@@ -132,7 +132,7 @@ Every request sent to `/interactions` includes:
 - `X-Signature-Timestamp`: Timestamp string of when Discord sent the request.
 - Request Raw Body bytes.
 
-Verification is implemented in [`app/discord/security.py`](file:///home/jayh/Documents/nypl_discord_bot/app/discord/security.py) using `PyNaCl`:
+Verification is implemented in [`app/discord/security.py`](../app/discord/security.py) using `PyNaCl`:
 ```python
 from nacl.signing import VerifyKey
 

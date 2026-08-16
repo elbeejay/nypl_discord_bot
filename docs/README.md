@@ -8,13 +8,13 @@ Welcome to the documentation for the **NYC & NYPL Discord Bot**, an AI agentic b
 
 | Guide | Description |
 | :--- | :--- |
-| **[High-Level System Explainer](file:///home/jayh/Documents/nypl_discord_bot/docs/HIGH_LEVEL_EXPLAINER.md)** | Executive summary and comprehensive architecture walkthrough covering multi-channel ingress, A2A delegation, security, and cloud infrastructure. |
-| **[Discord User Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_USER_GUIDE.md)** | Quick-start guide for Discord users explaining available slash commands (`/ask`, `/nypl`, `/nycdata`) and example prompts. |
-| **[GCP Deployment Procedural SOP](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_DEPLOYMENT_PROCEDURE.md)** | Step-by-step operational runbook and checklist for GCP setup, IAM least-privilege service accounts, Secret Manager, Cloud Run deployment, and verification. |
-| **[Local Development Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/LOCAL_DEVELOPMENT.md)** | Step-by-step instructions for running locally with Python venv, ngrok tunneling, and running automated test suites. |
-| **[Discord Bot Setup Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_BOT_SETUP.md)** | Walkthrough for Discord Developer Portal setup, obtaining credentials (App ID, Public Key, Token), bot permissions, and registering slash commands. |
-| **[GCP Setup & Deployment Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_SETUP_AND_DEPLOYMENT.md)** | Complete guide for setting up GCP Secret Manager, deploying to Cloud Run with `--no-cpu-throttling`, configuring endpoints, and production maintenance. |
-| **[Architecture & Agents Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/ARCHITECTURE_AND_AGENTS.md)** | Deep dive into the Agent-to-Agent (A2A) orchestration model, Gemini 2.5 Flash tool-calling, SODA SoQL queries, and the Discord 3-second deferred interaction flow. |
+| **[High-Level System Explainer](HIGH_LEVEL_EXPLAINER.md)** | Executive summary and comprehensive architecture walkthrough covering multi-channel ingress, A2A delegation, security, and cloud infrastructure. |
+| **[Discord User Guide](DISCORD_USER_GUIDE.md)** | Quick-start guide for Discord users explaining available slash commands (`/ask`, `/nypl`, `/nycdata`) and example prompts. |
+| **[GCP Deployment Procedural SOP](GCP_DEPLOYMENT_PROCEDURE.md)** | Step-by-step operational runbook and checklist for GCP setup, IAM least-privilege service accounts, Secret Manager, Cloud Run deployment, and verification. |
+| **[Local Development Guide](LOCAL_DEVELOPMENT.md)** | Step-by-step instructions for running locally with Python venv, ngrok tunneling, and running automated test suites. |
+| **[Discord Bot Setup Guide](DISCORD_BOT_SETUP.md)** | Walkthrough for Discord Developer Portal setup, obtaining credentials (App ID, Public Key, Token), bot permissions, and registering slash commands. |
+| **[GCP Setup & Deployment Guide](GCP_SETUP_AND_DEPLOYMENT.md)** | Complete guide for setting up GCP Secret Manager, deploying to Cloud Run with `--no-cpu-throttling`, configuring endpoints, and production maintenance. |
+| **[Architecture & Agents Guide](ARCHITECTURE_AND_AGENTS.md)** | Deep dive into the Agent-to-Agent (A2A) orchestration model, Gemini 2.5 Flash tool-calling, SODA SoQL queries, and the Discord 3-second deferred interaction flow. |
 
 ---
 

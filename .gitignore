@@ -217,4 +217,19 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Deployment & Credentials
 deploy.txt
+*.key
+*.pem
+*.pfx
+*.p12
+*credentials*.json
+*service_account*.json
+.env.*
+!.env.example
+
+# IDEs & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -11,6 +11,11 @@ __pycache__/
 .env
 .env.*
 !.env.example
+deploy.txt
+*.key
+*.pem
+*credentials*.json
+*service_account*.json
 
 # Git & IDEs
 .git/

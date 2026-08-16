@@ -1,72 +1,69 @@
-# NYPL / NYC Data Discord Bot 🗽🤖
+# NYPL & NYC Urban Data AI Assistant 🗽🤖🏛️
 
-An AI agentic backend built with **FastAPI**, **Google GenAI (Gemini 2.0 Flash)**, and **Discord HTTP Interactions**, designed to scale to zero on **Google Cloud Run** to query NYC Open Data (311, restaurant inspections, tree census) and NYPL Digital Collections.
+A multi-channel AI agentic system built with **FastAPI**, **Google GenAI (Gemini 2.5 Flash)**, **Discord HTTP Interactions**, and an **interactive React + A2UI Web App** styled in the editorial aesthetic of the **New York Public Library (nypl.org)**.
 
----
-
-## 📚 Complete Documentation
-
-Comprehensive guides are available in the [`docs/`](docs/README.md) directory:
-
-- 📖 **[High-Level System Explainer](docs/HIGH_LEVEL_EXPLAINER.md)** — Executive summary, end-to-end request lifecycles, and architecture overview.
-- 💬 **[Discord User Guide](docs/DISCORD_USER_GUIDE.md)** — User guide for interacting with `/ask`, `/nypl`, and `/nycdata` slash commands.
-- 📋 **[GCP Deployment Procedural SOP](docs/GCP_DEPLOYMENT_PROCEDURE.md)** — Step-by-step procedural runbook for provisioning, secrets, deployment, and verification.
-- 💻 **[Local Development Guide](docs/LOCAL_DEVELOPMENT.md)** — Step-by-step instructions for running locally with virtualenv, ngrok tunneling, and running automated tests.
-- 🤖 **[Discord Bot Setup Guide](docs/DISCORD_BOT_SETUP.md)** — Developer Portal walkthrough, credentials, OAuth2 bot invite link, and slash commands.
-- ☁️ **[GCP Setup & Cloud Run Deployment](docs/GCP_SETUP_AND_DEPLOYMENT.md)** — GCP Secret Manager configuration, `--no-cpu-throttling` deployment, and production verification.
-- 🏛️ **[Architecture & Agents Guide](docs/ARCHITECTURE_AND_AGENTS.md)** — Agent-to-Agent (A2A) orchestration model, SODA SoQL queries, and the Discord 3-second deferred interaction flow.
+Designed to scale to zero on **Google Cloud Run** in a **single unified container** for hackathons and production deployments.
 
 ---
 
-## ⚡ Quick Start (Local)
+## 🌟 Key Features
 
-### 1. Install Dependencies
+1. **🏛️ NYPL Digital Archives & Collections**: Search historical prints, photographs, manuscripts, maps, and research centers (Schwarzman, Schomburg, LPA, SNFL).
+2. **🏙️ NYC Open Data Engine**: Live SODA queries for 311 service complaints (noise, parking, heating), DOHMH restaurant inspection letter grades, and 5-borough street tree census data.
+3. **✨ Agent-to-User Interface (A2UI)**: The agent dynamically renders rich, interactive widgets inline with chat answers:
+   - **📊 Interactive Charts**: Categorical breakdown of 311 complaints and municipal metrics via Chart.js.
+   - **🗺️ Interactive NYC Maps**: Leaflet maps with custom pins and popups for library branches and civic incidents.
+   - **🖼️ NYPL Archive Photo Gallery**: Vintage print cards with high-res zoomable modal lightbox and direct archive permalinks.
+   - **📈 Metric / KPI Cards**: Color-coded stat indicators with deltas and status flags.
+   - **📋 Sortable Data Tables**: Paginated, searchable tables with instant CSV download.
+4. **💬 Dual-Channel Access**:
+   - **Custom Web Interface**: Real-time Server-Sent Events (SSE) token streaming, multi-turn memory, domain filter selector (`/ask`, `/nypl`, `/nycdata`), and dark/light reading room themes.
+   - **Discord Slash Bot**: Instant HTTP webhook response (<200ms) with deferred interaction patching.
+5. **🚀 Zero-CORS Single-Container Deployment**: Web frontend, REST/SSE APIs, and Discord webhooks run in a single Cloud Run container.
+
+---
+
+## ⚡ Quick Start (Local Development)
+
+### 1. Install Backend Dependencies
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Install Frontend Dependencies & Build
 ```bash
-cp .env.example .env
-# Fill in GEMINI_API_KEY, DISCORD_APP_ID, DISCORD_PUBLIC_KEY, DISCORD_BOT_TOKEN
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
-### 3. Run Automated Tests
+### 3. Configure Environment
+```bash
+cp .env.example .env
+# Set GEMINI_API_KEY (or GOOGLE_CLOUD_PROJECT), DISCORD credentials if using bot
+```
+
+### 4. Run Automated Tests
 ```bash
 python -m unittest discover tests
 ```
 
-### 4. Start Local Server
+### 5. Start Full-Stack App
 ```bash
+# Start FastAPI backend (serves both API & Frontend SPA at http://localhost:8080)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-### 5. Register Slash Commands
-```bash
-# Instant registration for your development server
-python scripts/register_commands.py --guild YOUR_DISCORD_SERVER_ID
-
-# Or global registration
-python scripts/register_commands.py
-```
+> **Tip for Frontend Iteration**: Run `cd frontend && npm run dev` to launch the Vite development server with Hot Module Replacement on `http://localhost:5173` (requests to `/api` are automatically proxied to FastAPI).
 
 ---
 
-## 💡 Overview & Architecture
+## ☁️ Google Cloud Run Single-Container Deployment
 
-Building an AI agentic backend on Cloud Run with Discord interactions over HTTP is an ideal architecture for querying urban datasets:
-- **Serverless & Cost-Effective**: Scales to 0 when idle ($0 when unused, runs comfortably within GCP's free tier).
-- **Agent-to-Agent (A2A) Routing**: An Orchestrator Agent triages user requests and delegates to domain-expert agents (NYPL archives & NYC Open Data).
-- **HTTP Interactions vs. Gateway**: Uses Discord's modern HTTP webhook interactions rather than persistent WebSocket connections.
-- **3-Second Deferral Rule**: Instantly returns `{"type": 5}` (`DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE`) in `< 200ms` and patches the original message via background task after running the agent tools.
-
----
-
-## ☁️ Google Cloud Run Deployment
-
-Deploy directly from source with secrets mounted from Secret Manager:
+Deploy the entire stack (React Web App + FastAPI AI Backend + Discord Bot) in **one command**:
 
 ```bash
 gcloud run deploy nypl-discord-bot \
@@ -87,5 +84,19 @@ DISCORD_BOT_TOKEN=DISCORD_BOT_TOKEN:latest,\
 GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
-Once deployed, copy your Cloud Run endpoint URL (`https://<service-url>/interactions`) and set it as the **Interactions Endpoint URL** in the [Discord Developer Portal](https://discord.com/developers/applications). Detailed setup guide is in [`docs/GCP_SETUP_AND_DEPLOYMENT.md`](docs/GCP_SETUP_AND_DEPLOYMENT.md).
+Once deployed, your single Cloud Run URL provides:
+- 🌐 **Web Interface**: `https://<service-url>/`
+- 🤖 **Discord Interactions Endpoint**: `https://<service-url>/interactions`
+- ⚡ **SSE Streaming API**: `https://<service-url>/api/v1/chat/stream`
+- 🩺 **Health Check**: `https://<service-url>/health`
 
+---
+
+## 📚 Complete Documentation
+
+- 📖 **[High-Level System Explainer](docs/HIGH_LEVEL_EXPLAINER.md)** — Executive summary and request lifecycles.
+- 💬 **[Discord User Guide](docs/DISCORD_USER_GUIDE.md)** — Discord slash command reference (`/ask`, `/nypl`, `/nycdata`).
+- 📋 **[GCP Deployment Procedural SOP](docs/GCP_DEPLOYMENT_PROCEDURE.md)** — Step-by-step GCP Secret Manager & Cloud Run runbook.
+- 💻 **[Local Development Guide](docs/LOCAL_DEVELOPMENT.md)** — Local development & automated testing instructions.
+- 🤖 **[Discord Bot Setup Guide](docs/DISCORD_BOT_SETUP.md)** — Discord Developer Portal setup.
+- 🏛️ **[Architecture & Agents Guide](docs/ARCHITECTURE_AND_AGENTS.md)** — Agent routing and A2UI schema details.

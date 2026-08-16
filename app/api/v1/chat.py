@@ -1,14 +1,12 @@
-"""
-Frontend Chat & Streaming Endpoints.
-Supports REST responses and Server-Sent Events (SSE) streaming with A2UI dynamic components.
-"""
-
 import json
+import logging
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
+from app.config import settings
 from app.schemas.a2ui import FrontendChatRequest, FrontendChatResponse
 from app.agents.orchestrator import orchestrator_agent
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -21,9 +19,15 @@ async def chat_endpoint(request: FrontendChatRequest):
     try:
         return await orchestrator_agent.handle_frontend_query(request)
     except Exception as e:
+        logger.error(f"Error executing agent query: {e}", exc_info=True)
+        safe_detail = (
+            "An error occurred while executing the query. Please try again."
+            if settings.ENVIRONMENT.lower() == "production"
+            else f"Error executing agent query: {str(e)}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error executing agent query: {str(e)}"
+            detail=safe_detail
         )
 
 

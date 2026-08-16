@@ -82,12 +82,14 @@ class TestA2UIComponents(unittest.TestCase):
 
 class TestFrontendAPIEndpoints(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        settings.FRONTEND_ACCESS_PASSCODE = None
         settings.FRONTEND_API_KEY = None
         settings.ENVIRONMENT = "development"
         self.transport = ASGITransport(app=app)
         self.client = AsyncClient(transport=self.transport, base_url="http://test")
 
     async def asyncTearDown(self):
+        settings.FRONTEND_ACCESS_PASSCODE = None
         settings.FRONTEND_API_KEY = None
         settings.ENVIRONMENT = "development"
         await self.client.aclose()

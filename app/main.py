@@ -1,7 +1,11 @@
+import os
 import logging
 from typing import Optional
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from app.config import settings
@@ -38,20 +42,29 @@ app.add_middleware(RateLimitMiddleware)
 
 # ----------------------------------------------------
 # Security Layer 2: CORS Configuration
+# In production, the SPA is served same-origin and Discord uses server-to-server
+# webhooks (not browser requests), so wildcard CORS is never needed.
 # ----------------------------------------------------
-# Disallow allow_credentials if wildcard origins are used (OWASP / W3C CORS compliance)
-has_wildcard_cors = "*" in settings.CORS_ORIGINS
+cors_origins = settings.CORS_ORIGINS
+if is_production() and "*" in cors_origins:
+    logger.warning(
+        "Wildcard CORS origin ('*') is not allowed in production. "
+        "Restricting to same-origin only. Set CORS_ORIGINS explicitly to allow specific external origins."
+    )
+    cors_origins = []
+
+has_wildcard_cors = "*" in cors_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=not has_wildcard_cors,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # ----------------------------------------------------
-# Route Inclusions
+# Route Inclusions: APIs & Webhooks
 # ----------------------------------------------------
 # 1. API v1 for Frontend Clients (Protected via FRONTEND_API_KEY when configured)
 app.include_router(api_v1_router)
@@ -62,17 +75,36 @@ app.include_router(discord_router, prefix="/discord")
 
 
 # ----------------------------------------------------
-# Root & Health Endpoints
+# Health & Diagnostic Endpoints
 # ----------------------------------------------------
 
-class LegacyChatRequest(BaseModel):
-    query: str
-    command: Optional[str] = "ask"
+@app.get("/health")
+async def health_check():
+    """
+    Bare-minimum static health check endpoint required by GCP Cloud Run load balancers.
+    Touches zero AI models and consumes zero tokens.
+    """
+    return {"status": "ok"}
 
 
-@app.get("/")
-async def root():
-    # In production, redact internal architecture details
+@app.get("/api/config")
+async def get_frontend_config():
+    """
+    Provides public client bootstrap configuration.
+    Sensitive keys are managed strictly server-side.
+    """
+    return {
+        "environment": settings.ENVIRONMENT,
+        "features": {
+            "a2ui_visualizations": True,
+            "sse_streaming": True,
+        },
+    }
+
+
+@app.get("/api/status")
+async def api_status():
+    """Returns backend status and feature capabilities."""
     if is_production():
         return {
             "status": "healthy",
@@ -99,13 +131,9 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
-    """
-    Bare-minimum static health check endpoint required by GCP Cloud Run load balancers.
-    Touches zero AI models and consumes zero tokens.
-    """
-    return {"status": "ok"}
+class LegacyChatRequest(BaseModel):
+    query: str
+    command: Optional[str] = "ask"
 
 
 @app.post("/chat")
@@ -136,3 +164,48 @@ async def legacy_local_chat_test(request: Optional[LegacyChatRequest] = None):
         "command": request.command,
         "response": response_text
     }
+
+
+# ----------------------------------------------------
+# Static Frontend Serving (SPA & A2UI Web App)
+# ----------------------------------------------------
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.is_dir():
+    logger.info(f"Mounting compiled frontend SPA from {FRONTEND_DIST}")
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(request: Request, full_path: str = ""):
+        accept_header = request.headers.get("accept", "")
+        
+        # Root path handling:
+        # If browser navigation (text/html) -> serve frontend index.html
+        # If API diagnostic / programmatic call without text/html -> return JSON status
+        if full_path in ("", "/"):
+            if "text/html" in accept_header:
+                index_file = FRONTEND_DIST / "index.html"
+                if index_file.is_file():
+                    return FileResponse(str(index_file))
+            return await api_status()
+
+        if full_path:
+            potential_file = (FRONTEND_DIST / full_path).resolve()
+            # Ensure resolved path does not escape the frontend/dist directory
+            try:
+                if potential_file.is_file() and potential_file.is_relative_to(FRONTEND_DIST.resolve()):
+                    return FileResponse(str(potential_file))
+            except (ValueError, RuntimeError):
+                pass
+        
+        index_file = FRONTEND_DIST / "index.html"
+        if index_file.is_file():
+            return FileResponse(str(index_file))
+            
+        return await api_status()
+else:
+    @app.get("/")
+    async def root_fallback():
+        return await api_status()

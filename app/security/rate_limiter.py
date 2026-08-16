@@ -89,24 +89,31 @@ rate_limiter = SlidingWindowRateLimiter(limit_per_minute=settings.RATE_LIMIT_PER
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Global rate limiting middleware.
-    Enforces per-IP limits across all endpoints.
+    Enforces per-IP sliding window limits with stricter thresholds for expensive AI endpoints.
     """
     async def dispatch(self, request: Request, call_next):
-        # Allow internal health checks higher throughput if needed
-        limit = settings.RATE_LIMIT_PER_MINUTE
-        if request.url.path == "/health":
+        path = request.url.path
+
+        # Granular per-route rate limits
+        if path.startswith("/api/v1/chat"):
+            # Limit expensive multi-agent reasoning calls to 15 req/min per IP
+            limit = min(15, settings.RATE_LIMIT_PER_MINUTE)
+        elif path == "/health" or path.startswith("/assets/"):
+            # Generous throughput for static assets and health checks
             limit = settings.RATE_LIMIT_PER_MINUTE * 4
+        else:
+            limit = settings.RATE_LIMIT_PER_MINUTE
 
         client_ip = rate_limiter.get_client_ip(request)
         is_limited, retry_after = rate_limiter.is_rate_limited(client_ip, custom_limit=limit)
 
         if is_limited:
-            logger.warning(f"Rate limit exceeded for IP {client_ip} on {request.url.path}")
+            logger.warning(f"Rate limit exceeded for IP {client_ip} on {path} (limit: {limit}/min)")
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
                     "error": "Too Many Requests",
-                    "message": f"Rate limit of {limit} req/min exceeded. Please slow down.",
+                    "message": f"Query rate limit of {limit} requests/minute per IP exceeded. Please wait a moment before trying again.",
                     "retry_after": retry_after,
                 },
                 headers={"Retry-After": str(retry_after)},

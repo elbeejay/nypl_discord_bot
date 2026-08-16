@@ -24,10 +24,11 @@ You have access to two expert delegation tools:
 1. `delegate_to_nyc_data_agent`: Call this when the query relates to NYC Open Data, 311 complaints, restaurant health inspection grades/violations, street trees, or municipal city data.
 2. `delegate_to_nypl_agent`: Call this when the query relates to the New York Public Library (NYPL), historical digital archives/photos/prints, library locations, or research collections.
 
-Instructions:
-- If a query requires both domains (e.g. "Tell me about the historic Schwarzman library building and find 311 noise issues around 42nd St"), you can call both tools.
-- Once you receive the response from the expert agent(s), format a polished, engaging answer with markdown, emojis, structured lists, and links.
-- If the user asks a simple greeting or general question about what you can do, explain your capabilities without needing to call tools.
+Multi-Turn Context & Coreference Instructions:
+- When <conversation_history> is provided in the prompt, carefully review prior turns to resolve all pronouns ("it", "that library", "the second violation", "that same year") and implied continuous filters (e.g. if previous turn was about 311 noise in Brooklyn and current turn asks "What about in Queens?", retain the 311 noise complaint criteria for Queens).
+- Always formulate self-contained, fully qualified queries when invoking delegation tools so the expert agents have complete context.
+- Once you receive the response from the expert agent(s), format a polished, engaging answer with markdown, structured lists, and links.
+- If the user asks a simple greeting or general question about capabilities, answer directly.
 """
 
 
@@ -121,12 +122,15 @@ class OrchestratorAgent:
             logger.error(f"Error in OrchestratorAgent: {e}", exc_info=True)
             return f"⚠️ Error processing your request: {str(e)}"
 
-    def _build_query_context(self, session, query: str) -> str:
-        """Constructs multi-turn conversational context with strict XML boundary demarcations."""
+    def _build_query_context(self, session, query: str, max_turns: int = 10) -> str:
+        """
+        Constructs multi-turn conversational context with strict XML boundary demarcations.
+        Preserves full previous responses up to 2500 chars to avoid losing tables or details.
+        """
         if len(session.messages) > 1:
-            recent_turns = session.messages[-5:-1]
+            recent_turns = session.messages[-(max_turns + 1):-1]
             turns_xml = "\n".join([
-                f'<turn role="{m.role}">\n{m.content[:300]}\n</turn>'
+                f'<turn role="{m.role}">\n{m.content[:2500]}\n</turn>'
                 for m in recent_turns
             ])
             return (
@@ -168,6 +172,7 @@ class OrchestratorAgent:
     async def stream_frontend_query(self, request: FrontendChatRequest) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Asynchronous generator yielding real-time SSE events for custom frontends:
+        - trace: Visual agent reasoning lifecycle stages (Gateway -> Expert -> Tool -> A2UI)
         - status: Background tool invocation / reasoning updates
         - token: Word / token stream for real-time text rendering
         - a2ui: Structured UI component event for data viz widgets
@@ -176,11 +181,84 @@ class OrchestratorAgent:
         session = session_manager.get_or_create_session(request.session_id)
         session.add_message(role="user", content=request.query)
 
-        yield {"event": "status", "data": {"message": f"Analyzing query and selecting expert agent ({request.command or 'ask'})..."}}
+        cmd = request.command or "ask"
+        q_lower = request.query.lower()
+
+        # Step 1 Trace: Gateway Router
+        yield {
+            "event": "trace",
+            "data": {
+                "stage": "gateway",
+                "title": "Gateway Router",
+                "agent": "Gemini 2.5 Flash Orchestrator",
+                "detail": f"Analyzing intent for [{cmd.upper()}] channel",
+                "status": "running"
+            }
+        }
+        yield {"event": "status", "data": {"message": f"Orchestrating agent pipeline ({cmd})..."}}
+        await asyncio.sleep(0.02)
+
+        # Step 2 Trace: Expert Selection & Tool Call
+        is_nypl = cmd == "nypl" or any(w in q_lower for w in ["photo", "picture", "archive", "history", "schwarzman", "schomburg", "manuscript", "book", "library", "branch"])
+        is_nyc = cmd == "nycdata" or any(w in q_lower for w in ["311", "noise", "complaint", "restaurant", "inspection", "grade", "tree", "census", "borough", "violation"])
+
+        if is_nypl and not is_nyc:
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "expert",
+                    "title": "Expert Agent Handoff",
+                    "agent": "🏛️ NYPL Archives Specialist",
+                    "detail": "Delegated to NYPL Digital Collections & Branch Navigator",
+                    "status": "running"
+                }
+            }
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "tool",
+                    "title": "Tool Invocation",
+                    "tool": "search_nypl_digital_collections()",
+                    "args": f"query='{request.query[:35]}...'",
+                    "status": "running"
+                }
+            }
+        elif is_nyc and not is_nypl:
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "expert",
+                    "title": "Expert Agent Handoff",
+                    "agent": "🏙️ NYC Open Data Specialist",
+                    "detail": "Delegated to NYC SODA Open Data Engine",
+                    "status": "running"
+                }
+            }
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "tool",
+                    "title": "Tool Invocation",
+                    "tool": "query_nyc_311() / query_socrata()",
+                    "args": "SoQL Dataset Filters Applied",
+                    "status": "running"
+                }
+            }
+        else:
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "expert",
+                    "title": "Multi-Expert Evaluation",
+                    "agent": "Gateway Multi-Agent Router",
+                    "detail": "Cross-domain evaluation (NYPL Archives + NYC Open Data)",
+                    "status": "running"
+                }
+            }
 
         try:
             query_context = self._build_query_context(session, request.query)
-            response_text = await self.handle_user_query(query_context, command_name=request.command or "ask")
+            response_text = await self.handle_user_query(query_context, command_name=cmd)
 
             # Stream words/tokens in progressive chunks for smooth frontend typography
             words = response_text.split(" ")
@@ -190,10 +268,19 @@ class OrchestratorAgent:
                 yield {"event": "token", "data": {"token": chunk}}
                 await asyncio.sleep(0.01)
 
-            # Generate A2UI if enabled
+            # Step 3 Trace & A2UI Generation
             if request.enable_a2ui:
-                a2ui_payload = extract_a2ui_from_text_response(response_text, command_name=request.command or "ask")
+                a2ui_payload = extract_a2ui_from_text_response(response_text, command_name=cmd)
                 if a2ui_payload and a2ui_payload.components:
+                    yield {
+                        "event": "trace",
+                        "data": {
+                            "stage": "a2ui",
+                            "title": "A2UI Synthesis",
+                            "detail": f"Constructed {len(a2ui_payload.components)} dynamic visual widget(s)",
+                            "status": "completed"
+                        }
+                    }
                     yield {
                         "event": "a2ui",
                         "data": a2ui_payload.model_dump(),
@@ -208,10 +295,36 @@ class OrchestratorAgent:
             else:
                 session.add_message(role="model", content=response_text)
 
+            # Step 4 Trace: Completed
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "completed",
+                    "title": "Pipeline Execution Complete",
+                    "detail": "Response generated & visual components hydrated",
+                    "status": "completed"
+                }
+            }
+
             yield {"event": "done", "data": {"session_id": session.session_id}}
         except Exception as e:
             logger.error(f"Error in stream_frontend_query: {e}", exc_info=True)
-            yield {"event": "error", "data": {"error": str(e)}}
+            safe_error_msg = (
+                "An unexpected error occurred while processing your request. Please try again."
+                if settings.ENVIRONMENT.lower() == "production"
+                else str(e)
+            )
+            yield {
+                "event": "trace",
+                "data": {
+                    "stage": "completed",
+                    "title": "Execution Interrupted",
+                    "detail": safe_error_msg,
+                    "status": "error"
+                }
+            }
+            yield {"event": "error", "data": {"error": safe_error_msg}}
+            yield {"event": "done", "data": {"session_id": session.session_id}}
 
 
 orchestrator_agent = OrchestratorAgent()

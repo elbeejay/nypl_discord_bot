@@ -58,10 +58,15 @@ async def process_agent_interaction(interaction_token: str, user_query: str, com
             logger.error("Failed to patch Discord response webhook.")
     except Exception as e:
         logger.error(f"Error executing agent task: {e}", exc_info=True)
+        safe_error = (
+            "❌ An error occurred while processing your request. Please try again later."
+            if settings.ENVIRONMENT.lower() == "production"
+            else f"❌ An error occurred while processing your request: {str(e)}"
+        )
         try:
             await discord_client.patch_original_response(
                 interaction_token=interaction_token,
-                content=f"❌ An error occurred while processing your request: {str(e)}",
+                content=safe_error,
             )
         except Exception as fallback_error:
             logger.error(f"Failed to deliver error response to Discord: {fallback_error}", exc_info=True)

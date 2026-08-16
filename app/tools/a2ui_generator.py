@@ -6,6 +6,7 @@ Transforms raw query responses from NYC Open Data and NYPL archives into interac
 from typing import List, Dict, Any, Optional
 import re
 from app.schemas.a2ui import (
+    A2UIAction,
     A2UIComponent,
     A2UIPayload,
     ChartData,
@@ -27,17 +28,19 @@ def build_chart_component(
     chart_type: str = "bar",
     dataset_label: str = "Count",
     colors: Optional[List[str]] = None,
+    actions: Optional[List[A2UIAction]] = None,
 ) -> A2UIComponent:
     """Builds an interactive chart component."""
     default_colors = [
-        "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
-        "#EC4899", "#14B8A6", "#F97316", "#6366F1", "#84CC16"
+        "#D41B2C", "#2563EB", "#B8860B", "#10B981", "#8B5CF6",
+        "#F59E0B", "#06B6D4", "#EC4899", "#6366F1", "#84CC16"
     ]
     bg_colors = colors or default_colors[:len(labels)]
     
     return A2UIComponent(
         type="chart",
         title=title,
+        actions=actions,
         data=ChartData(
             chart_type=chart_type,  # type: ignore
             title=title,
@@ -59,6 +62,7 @@ def build_map_component(
     center_lat: float = 40.7128,
     center_lng: float = -74.0060,
     zoom: int = 12,
+    actions: Optional[List[A2UIAction]] = None,
 ) -> A2UIComponent:
     """Builds an interactive map component."""
     map_markers = [
@@ -76,6 +80,7 @@ def build_map_component(
     return A2UIComponent(
         type="map",
         title=title,
+        actions=actions,
         data=MapData(
             title=title,
             center_lat=center_lat,
@@ -89,6 +94,7 @@ def build_map_component(
 def build_metric_card_component(
     title: str,
     metrics: List[Dict[str, Any]],
+    actions: Optional[List[A2UIAction]] = None,
 ) -> A2UIComponent:
     """Builds a key metrics/stat cards component."""
     metric_items = [
@@ -103,6 +109,7 @@ def build_metric_card_component(
     return A2UIComponent(
         type="metric_card",
         title=title,
+        actions=actions,
         data=MetricCardData(title=title, metrics=metric_items),
     )
 
@@ -110,13 +117,14 @@ def build_metric_card_component(
 def build_photo_gallery_component(
     title: str,
     photos: List[Dict[str, Any]],
+    actions: Optional[List[A2UIAction]] = None,
 ) -> A2UIComponent:
     """Builds an interactive photo/media gallery component."""
     items = [
         PhotoItem(
             title=p.get("title", "Historical Item"),
             image_url=p.get("image_url", ""),
-            thumbnail_url=p.get("thumbnail_url"),
+            thumbnail_url=p.get("thumbnail_url") or p.get("image_url"),
             link=p.get("link"),
             caption=p.get("caption"),
             date=p.get("date"),
@@ -126,6 +134,7 @@ def build_photo_gallery_component(
     return A2UIComponent(
         type="photo_gallery",
         title=title,
+        actions=actions,
         data=PhotoGalleryData(title=title, items=items),
     )
 
@@ -134,17 +143,36 @@ def build_table_component(
     title: str,
     columns: List[str],
     rows: List[List[Any]],
+    actions: Optional[List[A2UIAction]] = None,
 ) -> A2UIComponent:
     """Builds a sortable data table component."""
     return A2UIComponent(
         type="data_table",
         title=title,
+        actions=actions,
         data=DataTableData(
             title=title,
             columns=columns,
             rows=rows,
         ),
     )
+
+
+KNOWN_NYPL_LOCATIONS = {
+    "schwarzman": {"title": "Stephen A. Schwarzman Building", "lat": 40.7532, "lng": -73.9822, "category": "nypl_branch", "description": "476 5th Ave (Main Library & Rose Main Reading Room)"},
+    "schomburg": {"title": "Schomburg Center for Research in Black Culture", "lat": 40.8144, "lng": -73.9419, "category": "nypl_branch", "description": "515 Malcolm X Blvd, Harlem"},
+    "performing arts": {"title": "Library for the Performing Arts (LPA)", "lat": 40.7725, "lng": -73.9837, "category": "nypl_branch", "description": "Lincoln Center Plaza"},
+    "snfl": {"title": "Stavros Niarchos Foundation Library (SNFL)", "lat": 40.7518, "lng": -73.9818, "category": "nypl_branch", "description": "455 5th Ave (Circulating Flagship)"},
+    "mid-manhattan": {"title": "Stavros Niarchos Foundation Library (SNFL)", "lat": 40.7518, "lng": -73.9818, "category": "nypl_branch", "description": "455 5th Ave"},
+}
+
+KNOWN_NYPL_IMAGES = {
+    "510d47e1-e341-a3d9-e040-e00a18064a99": "https://images.nypl.org/index.php?id=724982b&t=w",
+    "510d47e1-e342-a3d9-e040-e00a18064a99": "https://images.nypl.org/index.php?id=724985b&t=w",
+    "510d47e1-e343-a3d9-e040-e00a18064a99": "https://images.nypl.org/index.php?id=1255554&t=w",
+    "510d47e1-e344-a3d9-e040-e00a18064a99": "https://images.nypl.org/index.php?id=724989b&t=w",
+    "510d47e1-e345-a3d9-e040-e00a18064a99": "https://images.nypl.org/index.php?id=724991b&t=w",
+}
 
 
 def extract_a2ui_from_text_response(text: str, command_name: str = "ask") -> Optional[A2UIPayload]:
@@ -155,35 +183,75 @@ def extract_a2ui_from_text_response(text: str, command_name: str = "ask") -> Opt
     components: List[A2UIComponent] = []
 
     # 1. NYPL Photo Links Extractor
-    # Looks for markdown links with digitalcollections.nypl.org
     nypl_links = re.findall(r'\[([^\]]+)\]\((http[s]?://digitalcollections\.nypl\.org/items/([a-zA-Z0-9\-]+))\)', text)
     if nypl_links:
         photos = []
-        for label, url, item_id in nypl_links[:6]:
-            # Generate NYPL image thumbnail URL format
-            thumb_url = f"https://images.nypl.org/index.php?id={item_id}&t=w"
+        for label, url, item_id in nypl_links[:8]:
+            thumb_url = KNOWN_NYPL_IMAGES.get(item_id, f"https://images.nypl.org/index.php?id={item_id}&t=w")
             photos.append({
                 "title": label.strip(),
                 "link": url,
                 "image_url": thumb_url,
                 "thumbnail_url": thumb_url,
-                "caption": f"NYPL Digital Collections Item: {item_id}",
+                "caption": f"NYPL Digital Collection Item",
             })
         if photos:
             components.append(build_photo_gallery_component(
-                title="Historical Digital Collection Items",
+                title="Historical Digital Collection Archives",
                 photos=photos,
+                actions=[
+                    A2UIAction(label="Explore More NYPL Archives", action_type="prompt", payload="Show me more historic photographs from this same era in NYPL collections")
+                ]
             ))
 
-    # 2. 311 Noise / Open Data Category & Stats Extractor
+    # 2. Known Library Branches / Locations Extractor for Map
+    matched_markers = []
+    text_lower = text.lower()
+    for key, loc in KNOWN_NYPL_LOCATIONS.items():
+        if key in text_lower:
+            matched_markers.append(loc)
+    
+    if matched_markers:
+        components.append(build_map_component(
+            title="NYPL Library Locations & Research Centers",
+            markers=matched_markers,
+            center_lat=matched_markers[0]["lat"],
+            center_lng=matched_markers[0]["lng"],
+            zoom=13,
+            actions=[
+                A2UIAction(label="Find Nearest NYPL Branch", action_type="prompt", payload="What are the operating hours and services at these NYPL locations?")
+            ]
+        ))
+
+    # 3. Markdown Tables Extractor
+    table_pattern = re.compile(r'(\|.+?\|\n\|[-:\s|]+?\|\n(?:\|.+?\|\n?)+)', re.MULTILINE)
+    table_match = table_pattern.search(text)
+    if table_match:
+        table_raw = table_match.group(1).strip().split('\n')
+        if len(table_raw) >= 3:
+            headers = [h.strip() for h in table_raw[0].split('|')[1:-1]]
+            rows = []
+            for row_line in table_raw[2:]:
+                if not row_line.strip() or not row_line.startswith('|'):
+                    continue
+                cells = [c.strip() for c in row_line.split('|')[1:-1]]
+                if len(cells) == len(headers):
+                    rows.append(cells)
+            
+            if headers and rows:
+                components.append(build_table_component(
+                    title="Dataset Records",
+                    columns=headers,
+                    rows=rows,
+                ))
+
+    # 4. 311 Noise / Open Data Category & Stats Extractor (Doughnut Chart)
     if "311" in text or "complaint" in text.lower() or "violation" in text.lower():
-        # Look for bullet points with complaint categories
         lines = text.split("\n")
         categories: Dict[str, int] = {}
         for line in lines:
             line_str = line.strip()
             if line_str.startswith(("-", "*", "•")):
-                # Check for categories like Manufacturing, Street/Sidewalk, Residential, Commercial
                 match = re.search(r'[\*\*_]*([A-Za-z0-9\s/&]+)[\*\*_]*\s*:\s*(.+)', line_str.lstrip("-*• "))
                 if match:
                     cat = match.group(1).strip()
@@ -194,11 +262,14 @@ def extract_a2ui_from_text_response(text: str, command_name: str = "ask") -> Opt
             labels = list(categories.keys())[:8]
             data = [float(categories[k]) for k in labels]
             components.append(build_chart_component(
-                title="Reported Incident Distribution",
+                title="Reported Incident Breakdown",
                 labels=labels,
                 data=data,
                 chart_type="doughnut",
                 dataset_label="Reports",
+                actions=[
+                    A2UIAction(label="Filter by Borough", action_type="prompt", payload="Break down these 311 issues by borough (Manhattan, Brooklyn, Queens, Bronx, Staten Island)")
+                ]
             ))
 
     if not components:

@@ -1,3 +1,18 @@
+# =========================================================================
+# Stage 1: Build React + A2UI Frontend SPA
+# =========================================================================
+FROM node:20-slim AS frontend-builder
+WORKDIR /build
+
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ ./
+RUN npm run build
+
+# =========================================================================
+# Stage 2: Production Python & FastAPI Runtime
+# =========================================================================
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -17,8 +32,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application source code
+# Copy application backend code
 COPY . .
+
+# Copy compiled frontend assets from Stage 1 into frontend/dist
+COPY --from=frontend-builder /build/dist ./frontend/dist
 
 # Create non-root user and set permissions
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

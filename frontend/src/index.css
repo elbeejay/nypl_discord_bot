@@ -1,0 +1,235 @@
+/* ==========================================================================
+   NYPL Design System: Colors, Typography & Base CSS Tokens
+   Inspired by The New York Public Library (nypl.org) & NYC Open Data
+   ========================================================================== */
+
+:root {
+  /* NYPL Brand Palette */
+  --nypl-red: #D41B2C;
+  --nypl-red-dark: #A50E1D;
+  --nypl-red-light: #FDE8EA;
+  --nypl-red-glow: rgba(212, 27, 44, 0.18);
+  
+  /* Archival Stone & Parchment (Light Theme) */
+  --bg-primary: #FAF8F5;
+  --bg-secondary: #F2EDE4;
+  --bg-tertiary: #E8E0D2;
+  --bg-surface: #FFFFFF;
+  --bg-surface-translucent: rgba(255, 255, 255, 0.88);
+  --bg-input: #FFFFFF;
+  
+  /* Ink & Typography */
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+  --text-muted: #71717A;
+  --text-inverse: #FFFFFF;
+  
+  /* Borders & Accents */
+  --border-subtle: #E4DCD0;
+  --border-medium: #D1C4B2;
+  --border-strong: #A89880;
+  --border-active: #D41B2C;
+  
+  /* Archival Brass & Library Accents */
+  --gold-accent: #B8860B;
+  --gold-light: #FDF6E2;
+  --gold-border: #E5C365;
+  
+  /* Status Colors */
+  --status-success: #107C41;
+  --status-success-bg: #EBF7EE;
+  --status-warning: #B35C00;
+  --status-warning-bg: #FFF4E5;
+  --status-critical: #C5221F;
+  --status-critical-bg: #FCE8E6;
+  --status-info: #006699;
+  --status-info-bg: #E5F3F9;
+
+  /* Typography */
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(35, 31, 32, 0.06), 0 1px 2px rgba(35, 31, 32, 0.04);
+  
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark / Night Reading Room Mode */
+[data-theme="dark"] {
+  --nypl-red: #E63946;
+  --nypl-red-dark: #C60000;
+  --nypl-red-light: rgba(230, 57, 70, 0.15);
+  --nypl-red-glow: rgba(230, 57, 70, 0.25);
+  
+  --bg-primary: #121214;
+  --bg-secondary: #1A1A1E;
+  --bg-tertiary: #24242A;
+  --bg-surface: #1E1E24;
+  --bg-surface-translucent: rgba(30, 30, 36, 0.88);
+  --bg-input: #17171C;
+  
+  --text-primary: #F4F4F5;
+  --text-secondary: #D4D4D8;
+  --text-muted: #A1A1AA;
+  --text-inverse: #121214;
+  
+  --border-subtle: #2E2E38;
+  --border-medium: #3F3F4E;
+  --border-strong: #5A5A6E;
+  --border-active: #E63946;
+  
+  --gold-accent: #E5C365;
+  --gold-light: rgba(229, 195, 101, 0.12);
+  --gold-border: #A07F2E;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* ==========================================================================
+   CSS Reset & Base Styles
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+a {
+  color: var(--nypl-red);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--nypl-red-dark);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ==========================================================================
+   Utility Typography & Color Classes
+   ========================================================================== */
+
+.serif-heading {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.mono-code {
+  font-family: var(--font-mono);
+}
+
+.text-nypl-red {
+  color: var(--nypl-red) !important;
+}
+
+.bg-nypl-red {
+  background-color: var(--nypl-red) !important;
+}
+
+.text-gold {
+  color: var(--gold-accent) !important;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.15); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+.animate-spin {
+  animation: spin 0.85s linear infinite !important;
+  display: inline-block;
+}

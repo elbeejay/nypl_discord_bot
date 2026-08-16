@@ -1,12 +1,21 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
 import type { MapData as A2UIMapData } from '../../types/a2ui';
 
 interface Props {
   data: A2UIMapData;
 }
+
+const MapRecenter: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+};
 
 // Custom NYPL / NYC Data SVG Pin
 const createCustomPin = (category?: string) => {
@@ -64,6 +73,7 @@ export const A2UIMap: React.FC<Props> = ({ data }) => {
           scrollWheelZoom={false}
           style={{ height: '100%', width: '100%' }}
         >
+          <MapRecenter center={[centerLat, centerLng]} zoom={zoom} />
           <TileLayer
             attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"

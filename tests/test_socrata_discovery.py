@@ -90,6 +90,7 @@ class TestSocrataDiscovery(unittest.IsolatedAsyncioTestCase):
             where="status = 'Active'",
             select=None,
             order=None,
+            group=None,
             limit=2,
         )
 
@@ -107,6 +108,7 @@ class TestSocrataDiscovery(unittest.IsolatedAsyncioTestCase):
             where="col = 'val'",
             select=None,
             order=None,
+            group=None,
             limit=5,
         )
 

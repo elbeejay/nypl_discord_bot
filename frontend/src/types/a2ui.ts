@@ -79,15 +79,12 @@ export interface A2UIAction {
   payload: string;
 }
 
-export type A2UIComponentType = 'chart' | 'map' | 'metric_card' | 'photo_gallery' | 'data_table';
-
-export interface A2UIComponent {
-  id: string;
-  type: A2UIComponentType;
-  title?: string;
-  data: ChartData | MapData | MetricCardData | PhotoGalleryData | DataTableData | any;
-  actions?: A2UIAction[];
-}
+export type A2UIComponent =
+  | { id: string; type: 'chart'; title?: string; data: ChartData; actions?: A2UIAction[] }
+  | { id: string; type: 'map'; title?: string; data: MapData; actions?: A2UIAction[] }
+  | { id: string; type: 'photo_gallery'; title?: string; data: PhotoGalleryData; actions?: A2UIAction[] }
+  | { id: string; type: 'metric_card'; title?: string; data: MetricCardData; actions?: A2UIAction[] }
+  | { id: string; type: 'data_table'; title?: string; data: DataTableData; actions?: A2UIAction[] };
 
 export interface A2UIPayload {
   version: string;

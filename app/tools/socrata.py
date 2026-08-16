@@ -173,12 +173,13 @@ async def query_dynamic_dataset(
     query_filter: Optional[str] = None,
     select: Optional[str] = None,
     order: Optional[str] = None,
+    group: Optional[str] = None,
     limit: int = 5,
     soql_where: Optional[str] = None,
 ) -> str:
     """
     Query any NYC Open Data dataset dynamically using its 4x4 ID (e.g. 'n6c5-95xh', '4y8i-pbvd')
-    and optional SoQL filters ($where, $select, $order).
+    and optional SoQL filters ($where, $select, $order, $group).
     """
     effective_where = query_filter or soql_where
     data = await query_socrata_dataset(
@@ -186,9 +187,12 @@ async def query_dynamic_dataset(
         where=effective_where,
         select=select,
         order=order,
+        group=group,
         limit=limit,
     )
     if not data:
         return f"No records found in dataset '{four_by_four_id}' matching the criteria."
+    if isinstance(data, list) and len(data) == 1 and "error" in data[0]:
+        return f"SoQL Query Error: {data[0]['error']}. Please review the dataset columns list and adjust the query (e.g., fetch raw records with limit or verify column names)."
     return json.dumps(data, indent=2)
 

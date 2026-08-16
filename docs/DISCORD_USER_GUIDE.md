@@ -27,16 +27,21 @@ This guide explains how to interact with the bot in Discord using slash commands
 * `/nycdata query: Sanitation inspection grade and violations for Katz's Delicatessen`
 * `/nycdata query: What grade did Peter Luger Steak House receive on its last inspection?`
 
-### 3. 📸 NYPL Historical Archives & Photos
+### 3. 🔍 Deep NYC Open Data Catalog Discovery (Dynamic Datasets)
+* `/nycdata query: Search the NYC Open Data catalog for LinkNYC Wi-Fi kiosks and check their deployment status in Queens`
+* `/nycdata query: Find datasets on NYC subway station accessibility and ridership`
+* `/nycdata query: Discover NYC datasets about building permits or traffic collisions`
+
+### 4. 📸 NYPL Historical Archives & Photos
 * `/nypl query: High resolution public domain photos of the Flatiron Building`
 * `/nypl query: Historical 19th-century subway and transit maps of Manhattan`
 * `/nypl query: Vintage photos of Central Park in winter`
 
-### 4. 🏛️ NYPL Branch Locations & Research Centers
+### 5. 🏛️ NYPL Branch Locations & Research Centers
 * `/nypl query: Where is the Schomburg Center for Research in Black Culture located?`
 * `/nypl query: Find library branches near Grand Central Terminal`
 
-### 5. 🧠 Multi-Domain Queries (Combined Knowledge)
+### 6. 🧠 Multi-Domain Queries (Combined Knowledge)
 * `/ask query: Tell me about the historic Stephen A. Schwarzman Building and find any recent 311 complaints around 42nd St & 5th Ave`
 
 ---

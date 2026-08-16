@@ -7,6 +7,7 @@ import { StarterCanvas } from './components/canvas/StarterCanvas';
 import { ArchitectureExplainer } from './components/docs/ArchitectureExplainer';
 import { AccessKeyModal } from './components/layout/AccessKeyModal';
 import { useChatStream } from './hooks/useChatStream';
+import { api } from './services/api';
 import type { ChatMessage } from './types/a2ui';
 
 export function App() {
@@ -41,56 +42,28 @@ export function App() {
   // Check auth session status with backend on startup
   useEffect(() => {
     async function checkAuth() {
-      try {
-        const res = await fetch('/api/v1/auth/verify', {
-          credentials: 'same-origin',
-        });
-        if (res.status === 401) {
-          setIsAuthRequired(true);
-          setIsAuthenticated(false);
-          setIsKeyModalOpen(true);
-        } else if (res.ok) {
-          setIsAuthRequired(false);
-          setIsAuthenticated(true);
-        }
-      } catch {
-        // Backend not reached (e.g. standalone dev mode)
+      const status = await api.verifyAuth();
+      setIsAuthenticated(status.authenticated);
+      setIsAuthRequired(status.requiresAuth);
+      if (status.requiresAuth && !status.authenticated) {
+        setIsKeyModalOpen(true);
       }
     }
     checkAuth();
   }, []);
 
   const handleLogin = useCallback(async (passcode: string): Promise<boolean> => {
-    try {
-      const res = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ passcode }),
-      });
-      if (res.ok) {
-        setIsAuthenticated(true);
-        setIsAuthRequired(false);
-        return true;
-      }
-      return false;
-    } catch {
-      // In standalone client mode without active backend, accept passcode
+    const success = await api.login(passcode);
+    if (success) {
       setIsAuthenticated(true);
       setIsAuthRequired(false);
       return true;
     }
+    return false;
   }, []);
 
   const handleLogout = useCallback(async () => {
-    try {
-      await fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin',
-      });
-    } catch {
-      // Ignore network failures on logout
-    }
+    await api.logout();
     setIsAuthenticated(false);
     setIsAuthRequired(true);
     setIsKeyModalOpen(true);

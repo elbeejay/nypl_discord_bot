@@ -31,6 +31,7 @@ from app.agents.orchestrator import orchestrator_agent
 SAMPLE_PROMPTS = [
     "What are recent 311 noise complaints in Williamsburg?",
     "Find health inspection grades and violations for Shake Shack in Manhattan.",
+    "Search the NYC Open Data catalog for LinkNYC Wi-Fi kiosks and check their status in Queens.",
     "Search NYPL digital archives for 1930s subway construction photos.",
     "Where is the Schomburg Center and what collections does it hold?",
     "Tell me about the historic Schwarzman building and find 311 complaints near 42nd St.",

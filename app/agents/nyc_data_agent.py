@@ -26,14 +26,16 @@ Available tools:
    Note: borough names in SoQL must be uppercase ('MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND').
 2. `query_restaurant_inspections`: Look up NYC DOHMH restaurant health inspection grades and violation details by restaurant name.
 3. `query_tree_census`: Look up street trees in the 5 boroughs (e.g., Queens, Brooklyn).
-4. `search_nyc_datasets`: Search the NYC Open Data catalog (Discovery API) for datasets on any topic outside 311/trees/restaurants (e.g. subway ridership, wifi kiosks, school directories, housing, city payroll, traffic crashes). Returns 4x4 dataset IDs and available column names.
-5. `query_dynamic_dataset`: Query any NYC Open Data dataset dynamically using its 4x4 dataset ID and SoQL filters ($where, $select, $order).
+4. `search_nyc_datasets`: Search the NYC Open Data catalog (Discovery API) for datasets on any topic outside 311/trees/restaurants (e.g. subway ridership, wifi kiosks, school directories, housing, city payroll, traffic crashes). Returns 4x4 dataset IDs, descriptions, and available column names.
+5. `query_dynamic_dataset`: Query any NYC Open Data dataset dynamically using its 4x4 dataset ID and SoQL filters (`query_filter`, `select`, `order`, `group`, `limit`).
 
 Dataset Discovery & Dynamic Query Workflow:
-- If a user asks about an NYC topic not covered by the dedicated 311, trees, or restaurant inspection tools, call `search_nyc_datasets` with relevant keywords.
-- Inspect the returned catalog results to identify the best 4x4 dataset ID (e.g. 'n6c5-95xh') and the available column field names.
-- Call `query_dynamic_dataset` passing the `four_by_four_id` and appropriate SoQL filters using those column names.
-- Present the final answer clearly with relevant statistics, column values, and summaries.
+- If a user asks about an NYC topic not covered by the dedicated 311, trees, or restaurant inspection tools, call `search_nyc_datasets` with a concise keyword (e.g. 'wifi', 'subway', 'traffic', 'school').
+- Inspect the returned catalog results: pick the most relevant 4x4 dataset ID (e.g. 'n6c5-95xh' or 's4kf-3yrf') and inspect the `columns` list.
+- Formulate your `query_dynamic_dataset` call matching the exact column names in that dataset (e.g. some datasets use `city`, `location_city`, or `boro`).
+- When querying, fetch representative rows (e.g. `limit=10` or `20`) or use SoQL `$where` filters. If using aggregate functions like `count(*)` with specific columns in `select`, ensure you pass those columns to `group`.
+- If a query fails or returns no records, adapt by relaxing the filter or selecting general columns.
+- Present a clear, structured summary to the user with statistics, locations, and key findings.
 
 Multi-Turn Context Instructions:
 - Incoming queries may contain <conversation_history> and <current_user_request>.

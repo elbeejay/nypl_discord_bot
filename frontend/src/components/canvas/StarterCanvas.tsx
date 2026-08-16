@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Building2, Sparkles, MapPin, Layers, UtensilsCrossed, Trees } from 'lucide-react';
+import { BookOpen, Building2, Sparkles, MapPin, Layers, UtensilsCrossed, Trees, Compass } from 'lucide-react';
 
 interface Props {
   onSelectPrompt: (prompt: string, command: string) => void;
@@ -36,6 +36,16 @@ const STARTER_CATEGORIES: StarterCategory[] = [
     icon: Layers,
     badge: 'NYPL Digital Archives',
     tags: ['1904 IRT', 'City Hall Station', 'Transit'],
+  },
+  {
+    id: 'discovery',
+    command: 'nycdata',
+    title: 'NYC Open Data Catalog Discovery',
+    description: 'Autonomous catalog explorer searching thousands of municipal datasets (Wi-Fi kiosks, transit, permits).',
+    prompt: 'Search the NYC Open Data catalog for LinkNYC Wi-Fi kiosks and summarize their deployment status in Queens.',
+    icon: Compass,
+    badge: 'Dynamic Discovery',
+    tags: ['Catalog Search', 'LinkNYC 5G', 'Dynamic SODA'],
   },
   {
     id: 'noise311',

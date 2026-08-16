@@ -112,19 +112,28 @@ export const A2UIGallery: React.FC<Props> = ({ data }) => {
                   {selectedPhoto.caption}
                 </p>
               )}
-              {selectedPhoto.link && (
-                <a
-                  href={selectedPhoto.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="a2ui-btn-primary"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
-                >
-                  <BookOpen size={14} />
-                  <span>Open Item in NYPL Digital Collections</span>
-                  <ExternalLink size={13} />
-                </a>
-              )}
+              {(() => {
+                if (!selectedPhoto.link) return null;
+                try {
+                  const parsed = new URL(selectedPhoto.link, window.location.origin);
+                  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+                  return (
+                    <a
+                      href={parsed.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="a2ui-btn-primary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
+                    >
+                      <BookOpen size={14} />
+                      <span>Open Item in NYPL Digital Collections</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
             </div>
           </div>
         </div>

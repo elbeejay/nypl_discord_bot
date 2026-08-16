@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { ChatMessage, A2UIPayload, AgentTraceStep } from '../types/a2ui';
+import { api } from '../services/api';
 
 const STORAGE_KEY = 'nypl_chat_session_v1';
 const SESSION_ID_KEY = 'nypl_session_id';
-const API_KEY_STORAGE = 'nypl_api_key';
 
 export function useChatStream() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -23,10 +23,6 @@ export function useChatStream() {
   useEffect(() => {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
-
-  const [apiKey, setApiKey] = useState<string>(() => {
-    return localStorage.getItem(API_KEY_STORAGE) || (import.meta as any).env?.VITE_API_KEY || '';
-  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [activeCommand, setActiveCommand] = useState<string>('ask');
@@ -51,10 +47,7 @@ export function useChatStream() {
     const currentId = sessionIdRef.current;
     if (currentId) {
       // Clean up server-side session
-      fetch(`/api/v1/sessions/${currentId}`, {
-        method: 'DELETE',
-        credentials: 'same-origin',
-      }).catch(() => {});
+      api.deleteSession(currentId);
     }
     setMessages([]);
     setSessionId(null);
@@ -127,6 +120,7 @@ export function useChatStream() {
       let accumulatedText = '';
       let latestA2UI: A2UIPayload | null = null;
       let currentTraces: AgentTraceStep[] = [];
+      let currentEvent = 'message';
 
       while (true) {
         const { value, done } = await reader.read();
@@ -136,11 +130,12 @@ export function useChatStream() {
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
-        let currentEvent = 'message';
-
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed) continue;
+          if (!trimmed) {
+            currentEvent = 'message';
+            continue;
+          }
 
           if (trimmed.startsWith('event:')) {
             currentEvent = trimmed.replace('event:', '').trim();
@@ -277,15 +272,13 @@ export function useChatStream() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, activeCommand, apiKey]);
+  }, [isLoading, activeCommand]);
 
   return {
     messages,
     isLoading,
     activeCommand,
     setActiveCommand,
-    apiKey,
-    setApiKey,
     sendMessage,
     clearChat,
   };

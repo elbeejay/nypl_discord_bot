@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     # Google GenAI / GCP
     GEMINI_API_KEY: Optional[str] = None
     GOOGLE_CLOUD_PROJECT: Optional[str] = None
-    GOOGLE_CLOUD_LOCATION: str = "us-central1"
+    GOOGLE_CLOUD_LOCATION: str = "global"
 
     # Models & Thinking Configuration
-    ORCHESTRATOR_MODEL: str = "gemini-2.5-flash"
-    EXPERT_MODEL: str = "gemini-2.5-flash"
+    ORCHESTRATOR_MODEL: str = "gemini-3.5-flash-lite"
+    EXPERT_MODEL: str = "gemini-3.5-flash-lite"
     THINKING_BUDGET: Optional[int] = None
     THINKING_LEVEL: Optional[str] = None
 

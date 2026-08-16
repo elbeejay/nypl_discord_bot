@@ -4,6 +4,7 @@ import { TopCommandBar } from './components/canvas/TopCommandBar';
 import { HorizontalPipelineTrace } from './components/canvas/HorizontalPipelineTrace';
 import { CanvasGrid } from './components/canvas/CanvasGrid';
 import { StarterCanvas } from './components/canvas/StarterCanvas';
+import { ArchitectureExplainer } from './components/docs/ArchitectureExplainer';
 import { AccessKeyModal } from './components/layout/AccessKeyModal';
 import { useChatStream } from './hooks/useChatStream';
 import type { ChatMessage } from './types/a2ui';
@@ -12,6 +13,8 @@ export function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('nypl_theme') as 'light' | 'dark') || 'light';
   });
+
+  const [activeView, setActiveView] = useState<'canvas' | 'explainer'>('canvas');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -140,12 +143,14 @@ export function App() {
   }, [inquiryTurns]);
 
   const handleSelectPrompt = (prompt: string, command: string) => {
+    setActiveView('canvas');
     setActiveCommand(command);
     sendMessage(prompt, command);
     setSelectedInquiryIdx(null); // jump to latest
   };
 
   const handleActionClick = (promptText: string) => {
+    setActiveView('canvas');
     sendMessage(promptText);
     setSelectedInquiryIdx(null); // jump to latest
   };
@@ -166,49 +171,61 @@ export function App() {
         isAuthenticated={isAuthenticated}
         onOpenKeyModal={() => setIsKeyModalOpen(true)}
         onLogout={handleLogout}
+        activeView={activeView}
+        onSelectView={setActiveView}
       />
 
       {/* Main Content Area */}
       <main className="canvas-main-container">
-        {/* Pinned Top Command Console */}
-        <TopCommandBar
-          isLoading={isLoading}
-          activeCommand={activeCommand}
-          onSelectCommand={setActiveCommand}
-          onSubmitPrompt={(prompt) => {
-            sendMessage(prompt);
-            setSelectedInquiryIdx(null);
-          }}
-          inquiries={userInquiries}
-          activeInquiryIndex={activeInquiryIndex}
-          onSelectInquiry={(idx) => setSelectedInquiryIdx(idx)}
-          onClearAll={handleClearAll}
-        />
-
-        {/* Dynamic Workspace */}
-        {inquiryTurns.length === 0 ? (
-          /* Empty / Initial Exploration State */
-          <StarterCanvas onSelectPrompt={handleSelectPrompt} />
+        {activeView === 'explainer' ? (
+          /* Hackathon Architecture & 30s Explainer View */
+          <ArchitectureExplainer
+            onSelectPrompt={handleSelectPrompt}
+            onBackToCanvas={() => setActiveView('canvas')}
+          />
         ) : (
-          /* Active Generative Canvas View */
-          <div className="canvas-workspace animate-fade-in">
-            {/* Horizontal Multi-Agent Reasoning Pipeline Stepper */}
-            {activeTurn?.botMsg && (
-              <HorizontalPipelineTrace
-                traces={activeTurn.botMsg.traces}
-                isStreaming={activeTurn.botMsg.isStreaming}
-              />
-            )}
+          <>
+            {/* Pinned Top Command Console */}
+            <TopCommandBar
+              isLoading={isLoading}
+              activeCommand={activeCommand}
+              onSelectCommand={setActiveCommand}
+              onSubmitPrompt={(prompt) => {
+                sendMessage(prompt);
+                setSelectedInquiryIdx(null);
+              }}
+              inquiries={userInquiries}
+              activeInquiryIndex={activeInquiryIndex}
+              onSelectInquiry={(idx) => setSelectedInquiryIdx(idx)}
+              onClearAll={handleClearAll}
+            />
 
-            {/* Dynamic Adaptive Data Grid */}
-            {activeTurn?.botMsg && (
-              <CanvasGrid
-                userQuery={activeTurn.userMsg?.content}
-                responseMessage={activeTurn.botMsg}
-                onActionClick={handleActionClick}
-              />
+            {/* Dynamic Workspace */}
+            {inquiryTurns.length === 0 ? (
+              /* Empty / Initial Exploration State */
+              <StarterCanvas onSelectPrompt={handleSelectPrompt} />
+            ) : (
+              /* Active Generative Canvas View */
+              <div className="canvas-workspace animate-fade-in">
+                {/* Horizontal Multi-Agent Reasoning Pipeline Stepper */}
+                {activeTurn?.botMsg && (
+                  <HorizontalPipelineTrace
+                    traces={activeTurn.botMsg.traces}
+                    isStreaming={activeTurn.botMsg.isStreaming}
+                  />
+                )}
+
+                {/* Dynamic Adaptive Data Grid */}
+                {activeTurn?.botMsg && (
+                  <CanvasGrid
+                    userQuery={activeTurn.userMsg?.content}
+                    responseMessage={activeTurn.botMsg}
+                    onActionClick={handleActionClick}
+                  />
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
       </main>
 

@@ -91,7 +91,7 @@ export const EditorialSummaryCard: React.FC<Props> = ({ userQuery, responseMessa
       <div className="canvas-editorial-footer">
         <div className="canvas-footer-brand">
           <Compass size={13} className="text-nypl-red" />
-          <span>NYPL Research Engine · Generated via Gemini 2.5 Flash Multi-Agent Architecture</span>
+          <span>NYPL Research Engine · Generated via Gemini 3.5 Flash Lite Multi-Agent Architecture</span>
         </div>
         <span className="canvas-timestamp">
           {new Date(responseMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -8,6 +8,9 @@ An AI agentic backend built with **FastAPI**, **Google GenAI (Gemini 2.0 Flash)*
 
 Comprehensive guides are available in the [`docs/`](file:///home/jayh/Documents/nypl_discord_bot/docs/README.md) directory:
 
+- 📖 **[High-Level System Explainer](file:///home/jayh/Documents/nypl_discord_bot/docs/HIGH_LEVEL_EXPLAINER.md)** — Executive summary, end-to-end request lifecycles, and architecture overview.
+- 💬 **[Discord User Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_USER_GUIDE.md)** — User guide for interacting with `/ask`, `/nypl`, and `/nycdata` slash commands.
+- 📋 **[GCP Deployment Procedural SOP](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_DEPLOYMENT_PROCEDURE.md)** — Step-by-step procedural runbook for provisioning, secrets, deployment, and verification.
 - 💻 **[Local Development Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/LOCAL_DEVELOPMENT.md)** — Step-by-step instructions for running locally with virtualenv, ngrok tunneling, and running automated tests.
 - 🤖 **[Discord Bot Setup Guide](file:///home/jayh/Documents/nypl_discord_bot/docs/DISCORD_BOT_SETUP.md)** — Developer Portal walkthrough, credentials, OAuth2 bot invite link, and slash commands.
 - ☁️ **[GCP Setup & Cloud Run Deployment](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_SETUP_AND_DEPLOYMENT.md)** — GCP Secret Manager configuration, `--no-cpu-throttling` deployment, and production verification.
@@ -70,10 +73,13 @@ gcloud run deploy nypl-discord-bot \
   --source . \
   --region us-east4 \
   --allow-unauthenticated \
+  --service-account nypl-bot-runner@${PROJECT_ID}.iam.gserviceaccount.com \
+  --execution-environment gen2 \
+  --cpu-boost \
   --no-cpu-throttling \
   --min-instances 0 \
   --max-instances 5 \
-  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-2.0-flash,EXPERT_MODEL=gemini-2.0-flash \
+  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-2.5-flash,EXPERT_MODEL=gemini-2.5-flash \
   --set-secrets \
 DISCORD_PUBLIC_KEY=DISCORD_PUBLIC_KEY:latest,\
 DISCORD_APP_ID=DISCORD_APP_ID:latest,\
@@ -81,5 +87,5 @@ DISCORD_BOT_TOKEN=DISCORD_BOT_TOKEN:latest,\
 GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
-Once deployed, copy your Cloud Run endpoint URL (`https://<service-url>/interactions`) and set it as the **Interactions Endpoint URL** in the [Discord Developer Portal](https://discord.com/developers/applications).
+Once deployed, copy your Cloud Run endpoint URL (`https://<service-url>/interactions`) and set it as the **Interactions Endpoint URL** in the [Discord Developer Portal](https://discord.com/developers/applications). Detailed setup guide is in [`docs/GCP_SETUP_AND_DEPLOYMENT.md`](file:///home/jayh/Documents/nypl_discord_bot/docs/GCP_SETUP_AND_DEPLOYMENT.md).
 

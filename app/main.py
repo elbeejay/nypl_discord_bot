@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -16,16 +16,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-is_production = settings.ENVIRONMENT.lower() == "production"
+
+def is_production() -> bool:
+    return settings.ENVIRONMENT.lower() == "production"
+
 
 # In production: disable OpenAPI / Swagger documentation endpoints for security
 app = FastAPI(
     title="NYC & NYPL Multi-Channel Agent Backend",
     version="0.2.0",
     description="Multi-channel AI Agent Backend supporting Discord bots, Web & Mobile Frontends, and A2UI dynamic visual data widgets.",
-    docs_url=None if is_production else "/docs",
-    redoc_url=None if is_production else "/redoc",
-    openapi_url=None if is_production else "/openapi.json",
+    docs_url=None if is_production() else "/docs",
+    redoc_url=None if is_production() else "/redoc",
+    openapi_url=None if is_production() else "/openapi.json",
 )
 
 # ----------------------------------------------------
@@ -36,10 +39,13 @@ app.add_middleware(RateLimitMiddleware)
 # ----------------------------------------------------
 # Security Layer 2: CORS Configuration
 # ----------------------------------------------------
+# Disallow allow_credentials if wildcard origins are used (OWASP / W3C CORS compliance)
+has_wildcard_cors = "*" in settings.CORS_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=not has_wildcard_cors,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -67,7 +73,7 @@ class LegacyChatRequest(BaseModel):
 @app.get("/")
 async def root():
     # In production, redact internal architecture details
-    if is_production:
+    if is_production():
         return {
             "status": "healthy",
             "service": "nypl_discord_bot",
@@ -103,15 +109,21 @@ async def health_check():
 
 
 @app.post("/chat")
-async def legacy_local_chat_test(request: LegacyChatRequest):
+async def legacy_local_chat_test(request: Optional[LegacyChatRequest] = None):
     """
     Direct /chat testing endpoint (development only).
     Disabled in production in favor of secured /api/v1/chat.
     """
-    if is_production:
+    if is_production():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Legacy /chat endpoint is disabled in production. Use /api/v1/chat.",
+            detail="Not Found",
+        )
+
+    if not request or not request.query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing 'query' field in request body",
         )
 
     logger.info(f"Direct /chat query: '{request.query}' (command: {request.command})")

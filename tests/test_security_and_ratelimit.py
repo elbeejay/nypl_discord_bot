@@ -55,18 +55,17 @@ class TestSecurityAndAuth(unittest.IsolatedAsyncioTestCase):
         self.assertIn("models", res_dev.json())
 
         # Test Production Mode
-        import app.main as main_mod
-        main_mod.is_production = True
-        try:
-            res_prod = await self.client.get("/")
-            self.assertEqual(res_prod.status_code, 200)
-            self.assertEqual(res_prod.json(), {"status": "healthy", "service": "nypl_discord_bot"})
+        settings.ENVIRONMENT = "production"
+        res_prod = await self.client.get("/")
+        self.assertEqual(res_prod.status_code, 200)
+        self.assertEqual(res_prod.json(), {"status": "healthy", "service": "nypl_discord_bot"})
 
-            # Legacy /chat endpoint should return 404 in production
-            res_chat = await self.client.post("/chat", json={"query": "hello"})
-            self.assertEqual(res_chat.status_code, 404)
-        finally:
-            main_mod.is_production = False
+        # Legacy /chat endpoint should return 404 in production with or without body
+        res_chat = await self.client.post("/chat", json={"query": "hello"})
+        self.assertEqual(res_chat.status_code, 404)
+
+        res_chat_empty = await self.client.post("/chat")
+        self.assertEqual(res_chat_empty.status_code, 404)
 
     def test_sliding_window_rate_limiter(self):
         limiter = SlidingWindowRateLimiter(limit_per_minute=3)

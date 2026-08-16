@@ -1,6 +1,7 @@
 import unittest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.config import settings
 from app.agents.session_manager import session_manager
 from app.tools.a2ui_generator import (
     build_chart_component,
@@ -81,10 +82,14 @@ class TestA2UIComponents(unittest.TestCase):
 
 class TestFrontendAPIEndpoints(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        settings.FRONTEND_API_KEY = None
+        settings.ENVIRONMENT = "development"
         self.transport = ASGITransport(app=app)
         self.client = AsyncClient(transport=self.transport, base_url="http://test")
 
     async def asyncTearDown(self):
+        settings.FRONTEND_API_KEY = None
+        settings.ENVIRONMENT = "development"
         await self.client.aclose()
 
     async def test_a2ui_catalog(self):

@@ -68,8 +68,8 @@ DISCORD_GUILD_ID=987654321098765432
 GEMINI_API_KEY=AIzaSy...YourGeminiKey
 
 # GenAI Models
-ORCHESTRATOR_MODEL=gemini-2.0-flash
-EXPERT_MODEL=gemini-2.0-flash
+ORCHESTRATOR_MODEL=gemini-3.5-flash-lite
+EXPERT_MODEL=gemini-3.5-flash-lite
 
 # ==============================================================================
 # EXTERNAL DATA APIS (Optional - Increases rate limits)
@@ -107,8 +107,8 @@ Verify that the server is running:
     "service": "nypl_discord_bot",
     "environment": "development",
     "models": {
-      "orchestrator": "gemini-2.0-flash",
-      "expert": "gemini-2.0-flash"
+      "orchestrator": "gemini-3.5-flash-lite",
+      "expert": "gemini-3.5-flash-lite"
     }
   }
   ```

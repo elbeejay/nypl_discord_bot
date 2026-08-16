@@ -116,3 +116,79 @@ async def query_tree_census(boroname: str, spc_common: Optional[str] = None, lim
     if not data:
         return f"No tree census records found for borough '{boroname}'."
     return json.dumps(data, indent=2)
+
+
+async def search_nyc_datasets(keyword: str, limit: int = 5) -> str:
+    """
+    Search the NYC Open Data catalog (Discovery API) for datasets matching a keyword or topic.
+    Returns a list of datasets with their 4x4 resource IDs (e.g., 'erm2-nwe9', 'n6c5-95xh'),
+    descriptions, and available column field names for querying.
+    Use this tool to find dataset IDs when the user asks about civic topics outside 311, trees, or restaurant inspections.
+    """
+    url = "https://api.us.socrata.com/api/catalog/v1"
+    try:
+        parsed_limit = max(1, min(int(limit), 10))
+    except (ValueError, TypeError):
+        parsed_limit = 5
+
+    params: Dict[str, Any] = {
+        "domains": "data.cityofnewyork.us",
+        "q": keyword,
+        "limit": parsed_limit,
+    }
+    headers: Dict[str, str] = {}
+    if settings.NYC_SOCRATA_APP_TOKEN:
+        headers["X-App-Token"] = settings.NYC_SOCRATA_APP_TOKEN
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params, headers=headers, timeout=12.0)
+            if response.status_code != 200:
+                logger.warning(f"Socrata catalog search failed ({response.status_code}): {response.text}")
+                return json.dumps([{"error": f"Catalog API error {response.status_code}: {response.text}"}])
+            data = response.json()
+
+            results = []
+            for item in data.get("results", []):
+                resource = item.get("resource", {})
+                fields = resource.get("columns_field_name") or [
+                    col.get("name") for col in resource.get("columns", []) if isinstance(col, dict)
+                ]
+                results.append({
+                    "dataset_name": resource.get("name"),
+                    "four_by_four_id": resource.get("id"),
+                    "description": resource.get("description", "")[:300] if resource.get("description") else "",
+                    "columns": fields[:15] if fields else [],
+                })
+            if not results:
+                return f"No NYC Open Data catalog entries found for '{keyword}'."
+            return json.dumps(results, indent=2)
+    except Exception as e:
+        logger.error(f"Error searching NYC datasets for '{keyword}': {e}", exc_info=True)
+        return json.dumps([{"error": f"Network or catalog search error: {str(e)}"}])
+
+
+async def query_dynamic_dataset(
+    four_by_four_id: str,
+    query_filter: Optional[str] = None,
+    select: Optional[str] = None,
+    order: Optional[str] = None,
+    limit: int = 5,
+    soql_where: Optional[str] = None,
+) -> str:
+    """
+    Query any NYC Open Data dataset dynamically using its 4x4 ID (e.g. 'n6c5-95xh', '4y8i-pbvd')
+    and optional SoQL filters ($where, $select, $order).
+    """
+    effective_where = query_filter or soql_where
+    data = await query_socrata_dataset(
+        dataset_id=four_by_four_id,
+        where=effective_where,
+        select=select,
+        order=order,
+        limit=limit,
+    )
+    if not data:
+        return f"No records found in dataset '{four_by_four_id}' matching the criteria."
+    return json.dumps(data, indent=2)
+

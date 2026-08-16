@@ -35,7 +35,7 @@ graph TD
         BgWorker[Async Background Task Worker]
         SessionMgr[In-Memory Multi-Turn Session Store]
 
-        subgraph Gemini_Agent_Hierarchy [Google GenAI / Gemini 2.5 Flash]
+        subgraph Gemini_Agent_Hierarchy [Google GenAI / Gemini 3.5 Flash Lite]
             Orchestrator[Gateway Orchestrator Agent]
             NYPL_Expert[NYPL Digital Archive Expert]
             NYC_Expert[NYC Open Data Specialist]

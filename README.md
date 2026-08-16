@@ -1,6 +1,6 @@
 # NYPL & NYC Urban Data AI Assistant 🗽🤖🏛️
 
-A multi-channel AI agentic system built with **FastAPI**, **Google GenAI (Gemini 2.5 Flash)**, **Discord HTTP Interactions**, and an **interactive React + A2UI Web App** styled in the editorial aesthetic of the **New York Public Library (nypl.org)**.
+A multi-channel AI agentic system built with **FastAPI**, **Google GenAI (Gemini 3.5 Flash Lite)**, **Discord HTTP Interactions**, and an **interactive React + A2UI Web App** styled in the editorial aesthetic of the **New York Public Library (nypl.org)**.
 
 Designed to scale to zero on **Google Cloud Run** in a **single unified container** for hackathons and production deployments.
 
@@ -76,7 +76,7 @@ gcloud run deploy nypl-discord-bot \
   --no-cpu-throttling \
   --min-instances 0 \
   --max-instances 5 \
-  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-2.5-flash,EXPERT_MODEL=gemini-2.5-flash \
+  --set-env-vars ENVIRONMENT=production,LOG_LEVEL=INFO,ORCHESTRATOR_MODEL=gemini-3.5-flash-lite,EXPERT_MODEL=gemini-3.5-flash-lite \
   --set-secrets \
 DISCORD_PUBLIC_KEY=DISCORD_PUBLIC_KEY:latest,\
 DISCORD_APP_ID=DISCORD_APP_ID:latest,\

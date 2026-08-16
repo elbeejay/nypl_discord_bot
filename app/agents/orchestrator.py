@@ -21,7 +21,7 @@ You are the Gateway Orchestrator Agent for the NYC & NYPL AI Assistant.
 Your job is to triage incoming user requests and delegate domain-specific tasks to specialized expert agents.
 
 You have access to two expert delegation tools:
-1. `delegate_to_nyc_data_agent`: Call this when the query relates to NYC Open Data, 311 complaints, restaurant health inspection grades/violations, street trees, or municipal city data.
+1. `delegate_to_nyc_data_agent`: Call this when the query relates to NYC Open Data, 311 complaints, restaurant health inspection grades/violations, street trees, municipal city datasets, civic topics, subway/transit metrics, wifi kiosks, traffic, or dataset discovery.
 2. `delegate_to_nypl_agent`: Call this when the query relates to the New York Public Library (NYPL), historical digital archives/photos/prints, library locations, or research collections.
 
 Multi-Turn Context & Coreference Instructions:
@@ -46,6 +46,8 @@ async def delegate_to_nypl_agent(query: str) -> str:
     """
     logger.info(f"Delegating to NYPL Agent: {query}")
     return await nypl_agent.run(query)
+
+
 
 
 class OrchestratorAgent:
@@ -200,7 +202,7 @@ class OrchestratorAgent:
 
         # Step 2 Trace: Expert Selection & Tool Call
         is_nypl = cmd == "nypl" or any(w in q_lower for w in ["photo", "picture", "archive", "history", "schwarzman", "schomburg", "manuscript", "book", "library", "branch"])
-        is_nyc = cmd == "nycdata" or any(w in q_lower for w in ["311", "noise", "complaint", "restaurant", "inspection", "grade", "tree", "census", "borough", "violation"])
+        is_nyc = cmd == "nycdata" or any(w in q_lower for w in ["311", "noise", "complaint", "restaurant", "inspection", "grade", "tree", "census", "borough", "violation", "dataset", "subway", "kiosk", "wifi", "traffic", "housing", "payroll", "budget"])
 
         if is_nypl and not is_nyc:
             yield {
